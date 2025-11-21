@@ -1616,7 +1616,7 @@ const translations: Record<Language, Record<string, string>> = {
     "postCard.writeCommentError": "Mee yaada barreessi",
     "postCard.commentAdded": "Yaada milkaa'inneen dabalameera!",
     "postCard.failedToComment": "Yaada dabalchuun hin dandeenye",
-    // "postCard.loginToLikeComment": "Yaadannoo jaalachuuf seenaa",
+    "postCard.loginToLikeComment": "Yaadannoo jaalachuuf seenaa",
   },
 };
 

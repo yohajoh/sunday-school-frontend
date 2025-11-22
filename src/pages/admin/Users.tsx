@@ -175,12 +175,12 @@ export const Users: React.FC = () => {
     }
   };
 
+  const api = process.env.VITE_API_URL;
+
   useEffect(function () {
     async function fetchUser() {
       try {
-        const res = await fetch(
-          "http://127.0.0.1:3001/api/sunday-school/users"
-        );
+        const res = await fetch(`${api}/api/sunday-school/users`);
         const data = await res.json();
         console.log(...data.data.data);
         setUsers(data.data.data);

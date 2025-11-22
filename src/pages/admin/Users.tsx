@@ -445,7 +445,14 @@ export const Users: React.FC = () => {
             </TableHeader>
 
             <Suspense
-              fallback={<Spinner className="h-6 w-6 text-indigo-600" />}
+              fallback={
+                <div className="flex flex-col items-center space-y-2 p-10">
+                  <Spinner className="h-6 w-6 text-indigo-600" />
+                  <p className="text-sm text-muted-foreground">
+                    Loading data...
+                  </p>
+                </div>
+              }
             >
               <TableBody>
                 {filteredUsers.map((user) => (
@@ -560,7 +567,7 @@ export const Users: React.FC = () => {
         </div>
 
         {/* Premium Empty State */}
-        {filteredUsers.length === 0 && (
+        {data.length === 0 && (
           <div className="text-center py-12 sm:py-16">
             <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-500/10 to-violet-500/10 rounded-2xl w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 flex items-center justify-center">
               <UsersIcon className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 dark:text-blue-400" />

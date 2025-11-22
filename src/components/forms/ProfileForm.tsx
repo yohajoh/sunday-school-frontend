@@ -150,7 +150,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ user, onSave }) => {
   const isOwnProfile = currentUser?.id === user.id;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/50 dark:from-slate-900 dark:via-blue-950/20 dark:to-emerald-950/10 p-4 sm:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/50 dark:from-slate-900 dark:via-blue-950/20 dark:to-emerald-950/10 ">
       <div className="max-w-7xl mx-auto">
         {/* Premium Header - Mobile Responsive */}
         <div className="mb-6 sm:mb-8">

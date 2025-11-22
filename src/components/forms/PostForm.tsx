@@ -162,7 +162,7 @@ export const PostForm: React.FC<PostFormProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-pink-50/50 dark:from-slate-900 dark:via-purple-950/20 dark:to-pink-950/10 p-4 sm:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-pink-50/50 dark:from-slate-900 dark:via-purple-950/20 dark:to-pink-950/10">
       <div className="max-w-4xl mx-auto">
         {/* Premium Header - Mobile Responsive */}
         <div className="mb-6 sm:mb-8">

@@ -181,7 +181,7 @@ export const Users: React.FC = () => {
   useEffect(function () {
     async function fetchUser() {
       try {
-        const res = await fetch(`${API}/debug-check`);
+        const res = await fetch(`${API}/api/sunday-school/users`);
         const data = await res.json();
         console.log(data.data);
         setUsers(data.data.data);

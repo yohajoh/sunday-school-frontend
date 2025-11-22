@@ -179,7 +179,7 @@ export const Users: React.FC = () => {
 
   const API = import.meta.env.VITE_API_URL;
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["users"],
     queryFn: async function fetchUsers() {
       try {
@@ -443,17 +443,12 @@ export const Users: React.FC = () => {
                 </TableHead>
               </TableRow>
             </TableHeader>
-
-            <Suspense
-              fallback={
-                <div className="flex flex-col items-center space-y-2 p-10">
-                  <Spinner className="h-6 w-6 text-indigo-600" />
-                  <p className="text-sm text-muted-foreground">
-                    Loading data...
-                  </p>
-                </div>
-              }
-            >
+            {isLoading ? (
+              <div className="flex flex-col items-center space-y-2 p-10">
+                <Spinner className="h-6 w-6 text-indigo-600" />
+                <p className="text-sm text-muted-foreground">Loading data...</p>
+              </div>
+            ) : (
               <TableBody>
                 {filteredUsers.map((user) => (
                   <TableRow
@@ -562,7 +557,7 @@ export const Users: React.FC = () => {
                   </TableRow>
                 ))}
               </TableBody>
-            </Suspense>
+            )}
           </Table>
         </div>
 

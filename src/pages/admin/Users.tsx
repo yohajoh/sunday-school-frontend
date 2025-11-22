@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { User } from "@/types";
@@ -46,6 +46,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { UserForm } from "@/components/forms/UserForm";
+import { useQuery } from "@tanstack/react-query";
+import Spinner from "@/components/shared/Spinner";
 
 export const Users: React.FC = () => {
   const { t } = useLanguage();
@@ -176,21 +178,22 @@ export const Users: React.FC = () => {
   };
 
   const API = import.meta.env.VITE_API_URL;
-  console.log(`${API}/api/sunday-school/users`);
 
-  useEffect(function () {
-    async function fetchUser() {
+  const { data } = useQuery({
+    queryKey: ["users"],
+    queryFn: async function fetchUsers() {
       try {
         const res = await fetch(`${API}/api/sunday-school/users`);
         const data = await res.json();
-        console.log(data.data);
         setUsers(data.data.data);
+        return data.data;
       } catch (err) {
         console.log("Error:", err);
       }
-    }
-    fetchUser();
-  }, []);
+    },
+    staleTime: 1000 * 60 + 5,
+    gcTime: 1000 * 60 * 60,
+  });
 
   return (
     <div className="space-y-6 ">
@@ -440,114 +443,119 @@ export const Users: React.FC = () => {
                 </TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow
-                  key={user.email}
-                  className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all duration-300 group"
-                >
-                  <TableCell className="py-4 px-2 sm:px-4">
-                    <Checkbox
-                      checked={selectedUsers.includes(user.id)}
-                      onCheckedChange={() => toggleSelectUser(user.id)}
-                      className="border-slate-300 dark:border-slate-600 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                    />
-                  </TableCell>
-                  <TableCell className="py-4 font-mono font-semibold text-slate-800 dark:text-white text-sm px-2 sm:px-4">
-                    <div className="min-w-0">
-                      <span className="truncate block">{user.studentId}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-4 px-2 sm:px-4">
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                      <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border border-slate-200 dark:border-slate-600 shadow-sm flex-shrink-0">
-                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-violet-500 text-white font-semibold text-xs sm:text-sm shadow-md">
-                          {user.firstName?.[0]}
-                          {user.lastName?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-slate-800 dark:text-white text-sm sm:text-base truncate">
-                          {user.firstName} {user.lastName}
-                        </p>
-                        <p className="text-xs text-slate-600 dark:text-slate-400 truncate hidden sm:block">
-                          {user.church}
-                        </p>
+
+            <Suspense
+              fallback={<Spinner className="h-6 w-6 text-indigo-600" />}
+            >
+              <TableBody>
+                {filteredUsers.map((user) => (
+                  <TableRow
+                    key={user.email}
+                    className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all duration-300 group"
+                  >
+                    <TableCell className="py-4 px-2 sm:px-4">
+                      <Checkbox
+                        checked={selectedUsers.includes(user.id)}
+                        onCheckedChange={() => toggleSelectUser(user.id)}
+                        className="border-slate-300 dark:border-slate-600 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                      />
+                    </TableCell>
+                    <TableCell className="py-4 font-mono font-semibold text-slate-800 dark:text-white text-sm px-2 sm:px-4">
+                      <div className="min-w-0">
+                        <span className="truncate block">{user.studentId}</span>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell py-4 text-slate-700 dark:text-slate-300 px-2 sm:px-4">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-slate-400 flex-shrink-0" />
-                      <span className="text-sm truncate min-w-0">
-                        {user.email}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell py-4 text-slate-700 dark:text-slate-300 px-2 sm:px-4">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-slate-400 flex-shrink-0" />
-                      <span className="text-sm truncate">
-                        {user.phoneNumber}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-4 px-2 sm:px-4">
-                    <div className="min-w-0">
-                      <Badge
-                        className={`rounded-lg font-medium shadow-sm text-white text-xs truncate ${getRoleColor(
-                          user.role
-                        )}`}
-                      >
-                        {user.role.toUpperCase()}
-                      </Badge>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-4 px-2 sm:px-4">
-                    <div className="min-w-0">
-                      <Badge
-                        className={`rounded-lg font-medium shadow-sm text-white text-xs truncate ${getStatusColor(
-                          user.status
-                        )}`}
-                      >
-                        {user.status === "active"
-                          ? t("common.active")
-                          : t("common.inactive")}
-                      </Badge>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-4 text-right px-2 sm:px-4">
-                    <div className="flex justify-end gap-1 sm:gap-2 min-w-0">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setViewUser(user)}
-                        className="h-8 w-8 sm:h-9 sm:w-9 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-0 flex-shrink-0"
-                      >
-                        <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditUser(user)}
-                        className="h-8 w-8 sm:h-9 sm:w-9 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-0 flex-shrink-0"
-                      >
-                        <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteUser(user)}
-                        disabled={user.id === currentUser?.id}
-                        className="h-8 w-8 sm:h-9 sm:w-9 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-0 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-                      >
-                        <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
+                    </TableCell>
+                    <TableCell className="py-4 px-2 sm:px-4">
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border border-slate-200 dark:border-slate-600 shadow-sm flex-shrink-0">
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-violet-500 text-white font-semibold text-xs sm:text-sm shadow-md">
+                            {user.firstName?.[0]}
+                            {user.lastName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-slate-800 dark:text-white text-sm sm:text-base truncate">
+                            {user.firstName} {user.lastName}
+                          </p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 truncate hidden sm:block">
+                            {user.church}
+                          </p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell py-4 text-slate-700 dark:text-slate-300 px-2 sm:px-4">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-slate-400 flex-shrink-0" />
+                        <span className="text-sm truncate min-w-0">
+                          {user.email}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell py-4 text-slate-700 dark:text-slate-300 px-2 sm:px-4">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-slate-400 flex-shrink-0" />
+                        <span className="text-sm truncate">
+                          {user.phoneNumber}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4 px-2 sm:px-4">
+                      <div className="min-w-0">
+                        <Badge
+                          className={`rounded-lg font-medium shadow-sm text-white text-xs truncate ${getRoleColor(
+                            user.role
+                          )}`}
+                        >
+                          {user.role.toUpperCase()}
+                        </Badge>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4 px-2 sm:px-4">
+                      <div className="min-w-0">
+                        <Badge
+                          className={`rounded-lg font-medium shadow-sm text-white text-xs truncate ${getStatusColor(
+                            user.status
+                          )}`}
+                        >
+                          {user.status === "active"
+                            ? t("common.active")
+                            : t("common.inactive")}
+                        </Badge>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4 text-right px-2 sm:px-4">
+                      <div className="flex justify-end gap-1 sm:gap-2 min-w-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setViewUser(user)}
+                          className="h-8 w-8 sm:h-9 sm:w-9 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-0 flex-shrink-0"
+                        >
+                          <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditUser(user)}
+                          className="h-8 w-8 sm:h-9 sm:w-9 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-0 flex-shrink-0"
+                        >
+                          <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteUser(user)}
+                          disabled={user.id === currentUser?.id}
+                          className="h-8 w-8 sm:h-9 sm:w-9 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-0 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                        >
+                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Suspense>
           </Table>
         </div>
 

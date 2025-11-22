@@ -176,7 +176,7 @@ export const Users: React.FC = () => {
   };
 
   const API = import.meta.env.VITE_API_URL;
-  console.log(API);
+  console.log(`${API}/api/sunday-school/users`);
 
   useEffect(function () {
     async function fetchUser() {

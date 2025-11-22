@@ -96,7 +96,7 @@ export const Users: React.FC = () => {
     setSortConfig({ key, direction });
   };
 
-  const sortedUsers = (safeUserData ? [...safeUserData] : []).sort((a, b) => {
+  const sortedUsers = (userData || []).sort((a, b) => {
     if (!sortConfig) return 0;
 
     const aValue = a[sortConfig.key];

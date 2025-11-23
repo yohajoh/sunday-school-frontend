@@ -39,8 +39,13 @@ const exportUsers = async (filteredUsers: User[]) => {
 
     const mainWorksheet = XLSX.utils.json_to_sheet(mainData);
 
-    // Premium styling for main sheet
-    enhanceWorksheetStyle(XLSX, mainWorksheet, mainData.length);
+    // Premium styling for main sheet - Blue header
+    enhanceWorksheetStyle(XLSX, mainWorksheet, mainData.length, false, {
+      headerBg: "FF2C5FAA", // Premium Blue
+      headerText: "FFFFFFFF",
+      alternateRow1: "FFF8F9FA",
+      alternateRow2: "FFFFFFFF",
+    });
 
     // Add main sheet to workbook
     XLSX.utils.book_append_sheet(workbook, mainWorksheet, "Users Overview");
@@ -85,7 +90,15 @@ const exportUsers = async (filteredUsers: User[]) => {
     }));
 
     const detailedWorksheet = XLSX.utils.json_to_sheet(detailedData);
-    enhanceWorksheetStyle(XLSX, detailedWorksheet, detailedData.length, true);
+
+    // Premium styling for detailed sheet - Green header
+    enhanceWorksheetStyle(XLSX, detailedWorksheet, detailedData.length, true, {
+      headerBg: "FF27AE60", // Premium Green
+      headerText: "FFFFFFFF",
+      alternateRow1: "FFF0F9F0",
+      alternateRow2: "FFFFFFFF",
+    });
+
     XLSX.utils.book_append_sheet(workbook, detailedWorksheet, "User Details");
 
     // ==================== STATISTICS SHEET ====================
@@ -117,7 +130,14 @@ const exportUsers = async (filteredUsers: User[]) => {
     ];
 
     const statsWorksheet = XLSX.utils.aoa_to_sheet(statsData);
-    enhanceStatsWorksheetStyle(XLSX, statsWorksheet, statsData.length);
+
+    // Premium styling for statistics sheet - Purple header
+    enhanceStatsWorksheetStyle(XLSX, statsWorksheet, statsData.length, {
+      headerBg: "FF8E44AD", // Premium Purple
+      headerText: "FFFFFFFF",
+      accent1: "FFF3E5F5",
+    });
+
     XLSX.utils.book_append_sheet(workbook, statsWorksheet, "Statistics");
 
     // ==================== EXPORT FILE ====================
@@ -138,22 +158,22 @@ const exportUsers = async (filteredUsers: User[]) => {
 };
 
 // ==================== PREMIUM STYLING FUNCTIONS ====================
+interface ColorScheme {
+  headerBg: string;
+  headerText: string;
+  alternateRow1?: string;
+  alternateRow2?: string;
+  accent1?: string;
+  accent2?: string;
+}
+
 const enhanceWorksheetStyle = (
   XLSX: any,
   worksheet: any,
   dataLength: number,
-  isDetailed: boolean = false
+  isDetailed: boolean = false,
+  colors: ColorScheme
 ) => {
-  // Define premium color scheme
-  const colors = {
-    headerBg: "FF2C5FAA", // Premium blue
-    headerText: "FFFFFFFF", // White
-    alternateRow1: "FFF8F9FA", // Light gray
-    alternateRow2: "FFFFFFFF", // White
-    accent1: "FFE3F2FD", // Light blue
-    accent2: "FFF3E5F5", // Light purple
-  };
-
   // Get range
   const range = XLSX.utils.decode_range(worksheet["!ref"]);
 
@@ -178,10 +198,16 @@ const enhanceWorksheetStyle = (
           wrapText: true,
         },
         border: {
-          top: { style: "thin", color: { rgb: "FF1E40A8" } },
-          left: { style: "thin", color: { rgb: "FF1E40A8" } },
-          bottom: { style: "thin", color: { rgb: "FF1E40A8" } },
-          right: { style: "thin", color: { rgb: "FF1E40A8" } },
+          top: { style: "thin", color: { rgb: darkenColor(colors.headerBg) } },
+          left: { style: "thin", color: { rgb: darkenColor(colors.headerBg) } },
+          bottom: {
+            style: "thin",
+            color: { rgb: darkenColor(colors.headerBg) },
+          },
+          right: {
+            style: "thin",
+            color: { rgb: darkenColor(colors.headerBg) },
+          },
         },
       };
     }
@@ -229,7 +255,7 @@ const enhanceWorksheetStyle = (
       }
 
       if (headerValue === "Role" && worksheet[cellAddress].v === "ADMIN") {
-        worksheet[cellAddress].s.font.color = { rgb: "FF2C5FAA" };
+        worksheet[cellAddress].s.font.color = { rgb: colors.headerBg };
         worksheet[cellAddress].s.font.bold = true;
       }
     }
@@ -269,7 +295,6 @@ const enhanceWorksheetStyle = (
         { wch: 18 }, // Membership Duration
         { wch: 12 }, // Last Login
         { wch: 18 }, // Days Since Last Login
-        { wch: 12 }, // Account Created
       ]
     : // Main sheet widths
       [
@@ -304,7 +329,8 @@ const enhanceWorksheetStyle = (
 const enhanceStatsWorksheetStyle = (
   XLSX: any,
   worksheet: any,
-  dataLength: number
+  dataLength: number,
+  colors: ColorScheme
 ) => {
   const range = XLSX.utils.decode_range(worksheet["!ref"]);
 
@@ -323,12 +349,12 @@ const enhanceStatsWorksheetStyle = (
           cellValue.includes("DISTRIBUTION"))
       ) {
         worksheet[cellAddress].s = {
-          fill: { fgColor: { rgb: "FF2C5FAA" } },
+          fill: { fgColor: { rgb: colors.headerBg } },
           font: {
             name: "Arial",
             sz: 14,
             bold: true,
-            color: { rgb: "FFFFFFFF" },
+            color: { rgb: colors.headerText },
           },
           alignment: { horizontal: "left" },
         };
@@ -346,13 +372,13 @@ const enhanceStatsWorksheetStyle = (
             bold: true,
             color: { rgb: "FF333333" },
           },
-          fill: { fgColor: { rgb: "FFF0F4FF" } },
+          fill: { fgColor: { rgb: colors.accent1 || "FFF0F4FF" } },
         };
       }
       // Metric values
       else if (C === 1 && R > 0) {
         worksheet[cellAddress].s = {
-          font: { name: "Calibri", sz: 11, color: { rgb: "FF2C5FAA" } },
+          font: { name: "Calibri", sz: 11, color: { rgb: colors.headerBg } },
           alignment: { horizontal: "right" },
         };
       }
@@ -360,6 +386,22 @@ const enhanceStatsWorksheetStyle = (
   }
 
   worksheet["!cols"] = [{ wch: 30 }, { wch: 15 }];
+};
+
+// Helper function to darken colors for borders
+const darkenColor = (color: string): string => {
+  // Simple color darkening by reducing hex values
+  const hex = color.replace("FF", "");
+  const r = Math.max(0, parseInt(hex.substr(0, 2), 16) - 20)
+    .toString(16)
+    .padStart(2, "0");
+  const g = Math.max(0, parseInt(hex.substr(2, 2), 16) - 20)
+    .toString(16)
+    .padStart(2, "0");
+  const b = Math.max(0, parseInt(hex.substr(4, 2), 16) - 20)
+    .toString(16)
+    .padStart(2, "0");
+  return `FF${r}${g}${b}`;
 };
 
 // ==================== UTILITY FUNCTIONS ====================

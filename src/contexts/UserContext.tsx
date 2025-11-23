@@ -1,5 +1,11 @@
 import React, { createContext, useContext, useReducer } from "react";
 import { User } from "@/types";
+import { toast } from "sonner";
+import { useMutation, UseMutationResult } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { useLanguage } from "./LanguageContext";
+
+const API = import.meta.env.VITE_API_URL;
 
 interface UserContextType {
   users: User[];
@@ -8,6 +14,7 @@ interface UserContextType {
   updateUser: (id: string, updates: Partial<User>) => void;
   deleteUser: (id: string) => void;
   setCurrentUser: (user: User | null) => void;
+  createUserMutation: UseMutationResult<User, Error, Omit<User, "id">, unknown>;
 }
 
 type UserAction =
@@ -80,6 +87,35 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
     dispatch({ type: "SET_CURRENT_USER", payload: user });
   };
 
+  const queryClient = useQueryClient();
+  const { t } = useLanguage();
+  // Create user mutation
+  const createUserMutation = useMutation({
+    mutationFn: async (userData: Omit<User, "id">) => {
+      const res = await fetch(`${API}/api/sunday-school/users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to create user: ${res.statusText}`);
+      }
+
+      return await res.json();
+    },
+    onSuccess: () => {
+      // Invalidate and refetch users list
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast.success(t("userForm.userCreated"));
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to create user: ${error.message}`);
+    },
+  });
+
   const value: UserContextType = {
     users: state.users,
     currentUser: state.currentUser,
@@ -87,6 +123,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
     updateUser,
     deleteUser,
     setCurrentUser,
+    createUserMutation,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

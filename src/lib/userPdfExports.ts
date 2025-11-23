@@ -1,76 +1,483 @@
 import { User } from "@/types";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
 import { toast } from "react-hot-toast";
 
-const exportUsers = (filteredUsers: User[]) => {
-  const doc = new jsPDF();
+const exportUsers = async (filteredUsers: User[]) => {
+  try {
+    // Dynamically import SheetJS
+    const XLSX = await import("xlsx");
 
-  doc.setFillColor(30, 30, 30);
-  doc.rect(0, 0, 210, 22, "F");
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
 
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18);
-  doc.text("User Report", 10, 14);
+    // ==================== MAIN USERS SHEET ====================
+    const mainData = filteredUsers.map((user, index) => ({
+      "No.": index + 1,
+      "Student ID": user.studentId,
+      "Full Name": `${user.firstName} ${
+        user.middleName ? user.middleName + " " : ""
+      }${user.lastName}`,
+      Email: user.email,
+      Phone: user.phoneNumber,
+      Role: user.role.toUpperCase(),
+      Status: user.status.charAt(0).toUpperCase() + user.status.slice(1),
+      Sex: user.sex?.charAt(0).toUpperCase() + user.sex?.slice(1) || "",
+      "Date of Birth": user.dateOfBirth ? formatDate(user.dateOfBirth) : "N/A",
+      "National ID": user.nationalId,
+      Occupation: user.occupation || "Not Specified",
+      "Marriage Status": formatMarriageStatus(user.marriageStatus),
+      Disability: user.disability ? "Yes" : "No",
+      "Disability Type": user.disabilityType || "None",
+      Location: `${user.region}${user.zone ? `, ${user.zone}` : ""}${
+        user.woreda ? `, ${user.woreda}` : ""
+      }`,
+      Church: user.church,
+      "Parent/Guardian": user.parentFullName,
+      "Parent Phone": user.parentPhoneNumber,
+      "Join Date": user.joinDate ? formatDate(user.joinDate) : "N/A",
+      "Last Login": user.lastLogin ? formatDate(user.lastLogin) : "Never",
+    }));
 
-  doc.setTextColor(80, 80, 80);
-  doc.setFontSize(12);
-  doc.text("Generated Data", 10, 32);
+    const mainWorksheet = XLSX.utils.json_to_sheet(mainData);
 
-  const tableHead = [
-    [
-      "Student ID",
-      "First Name",
-      "Last Name",
-      "Email",
-      "Phone",
-      "Role",
-      "Status",
-      "Church",
-      "Join Date",
-    ],
-  ];
+    // Premium styling for main sheet
+    enhanceWorksheetStyle(XLSX, mainWorksheet, mainData.length);
 
-  const tableBody = filteredUsers.map((u) => [
-    u.studentId,
-    u.firstName,
-    u.lastName,
-    u.email,
-    u.phoneNumber,
-    u.role,
-    u.status,
-    u.church,
-    u.joinDate,
-  ]);
+    // Add main sheet to workbook
+    XLSX.utils.book_append_sheet(workbook, mainWorksheet, "Users Overview");
 
-  autoTable(doc, {
-    head: tableHead,
-    body: tableBody,
-    startY: 40,
-    styles: {
-      fontSize: 10,
-      cellPadding: 3,
+    // ==================== DETAILED SHEET ====================
+    const detailedData = filteredUsers.map((user, index) => ({
+      "No.": index + 1,
+      "Student ID": user.studentId,
+      "First Name": user.firstName,
+      "Middle Name": user.middleName || "",
+      "Last Name": user.lastName,
+      Email: user.email,
+      "Phone Number": formatPhoneNumber(user.phoneNumber),
+      "Account Role": user.role.toUpperCase(),
+      "Account Status":
+        user.status.charAt(0).toUpperCase() + user.status.slice(1),
+      Gender: user.sex?.charAt(0).toUpperCase() + user.sex?.slice(1) || "",
+      "Date of Birth": user.dateOfBirth ? formatDate(user.dateOfBirth) : "N/A",
+      Age: user.dateOfBirth ? calculateAge(user.dateOfBirth) : "N/A",
+      "National ID": user.nationalId,
+      Occupation: user.occupation || "Not Specified",
+      "Marriage Status": formatMarriageStatus(user.marriageStatus),
+      "Has Disability": user.disability ? "Yes" : "No",
+      "Disability Type": user.disabilityType || "None",
+      Country: user.country || "Ethiopia",
+      Region: user.region,
+      Zone: user.zone || "Not Specified",
+      Woreda: user.woreda || "Not Specified",
+      Church: user.church,
+      "Parent Status": formatParentStatus(user.parentStatus),
+      "Parent Full Name": user.parentFullName,
+      "Parent Email": user.parentEmail || "Not Provided",
+      "Parent Phone": formatPhoneNumber(user.parentPhoneNumber),
+      "Join Date": user.joinDate ? formatDate(user.joinDate) : "N/A",
+      "Membership Duration": user.joinDate
+        ? calculateMembershipDuration(user.joinDate)
+        : "N/A",
+      "Last Login": user.lastLogin ? formatDate(user.lastLogin) : "Never",
+      "Days Since Last Login": user.lastLogin
+        ? calculateDaysSince(user.lastLogin)
+        : "N/A",
+      "Account Created": user.createdAt ? formatDate(user.createdAt) : "N/A",
+    }));
+
+    const detailedWorksheet = XLSX.utils.json_to_sheet(detailedData);
+    enhanceWorksheetStyle(XLSX, detailedWorksheet, detailedData.length, true);
+    XLSX.utils.book_append_sheet(workbook, detailedWorksheet, "User Details");
+
+    // ==================== STATISTICS SHEET ====================
+    const stats = calculateStatistics(filteredUsers);
+    const statsData = [
+      ["REPORT STATISTICS", ""],
+      ["Generated On", new Date().toLocaleString()],
+      ["Total Users", stats.totalUsers],
+      ["Active Users", stats.activeUsers],
+      ["Inactive Users", stats.inactiveUsers],
+      ["Admins", stats.admins],
+      ["Regular Users", stats.regularUsers],
+      ["Male Users", stats.maleUsers],
+      ["Female Users", stats.femaleUsers],
+      ["Users with Disability", stats.disabledUsers],
+      ["Average Age", stats.averageAge],
+      ["", ""],
+      ["MARRIAGE STATUS BREAKDOWN", ""],
+      ["Single", stats.marriageStats.single],
+      ["Married", stats.marriageStats.married],
+      ["Divorced", stats.marriageStats.divorced],
+      ["Widowed", stats.marriageStats.widowed],
+      ["", ""],
+      ["REGIONAL DISTRIBUTION", ""],
+      ...Object.entries(stats.regionalDistribution).map(([region, count]) => [
+        region,
+        count,
+      ]),
+    ];
+
+    const statsWorksheet = XLSX.utils.aoa_to_sheet(statsData);
+    enhanceStatsWorksheetStyle(XLSX, statsWorksheet, statsData.length);
+    XLSX.utils.book_append_sheet(workbook, statsWorksheet, "Statistics");
+
+    // ==================== EXPORT FILE ====================
+    const date = new Date().toISOString().slice(0, 10);
+    const timestamp = new Date().toISOString().slice(11, 19).replace(/:/g, "-");
+    XLSX.writeFile(
+      workbook,
+      `Sunday_School_Users_Report_${date}_${timestamp}.xlsx`
+    );
+
+    toast.success(
+      `📊 Exported ${filteredUsers.length} users with premium report`
+    );
+  } catch (error) {
+    console.error("Export error:", error);
+    toast.error("❌ Failed to generate export report");
+  }
+};
+
+// ==================== PREMIUM STYLING FUNCTIONS ====================
+const enhanceWorksheetStyle = (
+  XLSX: any,
+  worksheet: any,
+  dataLength: number,
+  isDetailed: boolean = false
+) => {
+  // Define premium color scheme
+  const colors = {
+    headerBg: "FF2C5FAA", // Premium blue
+    headerText: "FFFFFFFF", // White
+    alternateRow1: "FFF8F9FA", // Light gray
+    alternateRow2: "FFFFFFFF", // White
+    accent1: "FFE3F2FD", // Light blue
+    accent2: "FFF3E5F5", // Light purple
+  };
+
+  // Get range
+  const range = XLSX.utils.decode_range(worksheet["!ref"]);
+
+  // Style headers
+  for (let C = range.s.c; C <= range.e.c; C++) {
+    const cellAddress = XLSX.utils.encode_cell({ r: range.s.r, c: C });
+    if (!worksheet[cellAddress]) continue;
+
+    // Header styling
+    if (range.s.r === 0) {
+      worksheet[cellAddress].s = {
+        fill: { fgColor: { rgb: colors.headerBg } },
+        font: {
+          name: "Arial",
+          sz: 12,
+          bold: true,
+          color: { rgb: colors.headerText },
+        },
+        alignment: {
+          horizontal: "center",
+          vertical: "center",
+          wrapText: true,
+        },
+        border: {
+          top: { style: "thin", color: { rgb: "FF1E40A8" } },
+          left: { style: "thin", color: { rgb: "FF1E40A8" } },
+          bottom: { style: "thin", color: { rgb: "FF1E40A8" } },
+          right: { style: "thin", color: { rgb: "FF1E40A8" } },
+        },
+      };
+    }
+
+    // Data rows styling
+    for (let R = range.s.r + 1; R <= range.e.r; R++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+      if (!worksheet[cellAddress]) continue;
+
+      const isEvenRow = (R - range.s.r) % 2 === 0;
+
+      worksheet[cellAddress].s = {
+        fill: {
+          fgColor: {
+            rgb: isEvenRow ? colors.alternateRow1 : colors.alternateRow2,
+          },
+        },
+        font: {
+          name: "Calibri",
+          sz: 11,
+          color: { rgb: "FF333333" },
+        },
+        alignment: {
+          vertical: "center",
+          wrapText: true,
+        },
+        border: {
+          top: { style: "thin", color: { rgb: "FFE0E0E0" } },
+          left: { style: "thin", color: { rgb: "FFE0E0E0" } },
+          bottom: { style: "thin", color: { rgb: "FFE0E0E0" } },
+          right: { style: "thin", color: { rgb: "FFE0E0E0" } },
+        },
+      };
+
+      // Special styling for specific columns
+      const headerValue = worksheet[XLSX.utils.encode_cell({ r: 0, c: C })]?.v;
+      if (headerValue === "Status") {
+        const cellValue = worksheet[cellAddress].v;
+        if (cellValue === "Active") {
+          worksheet[cellAddress].s.font.color = { rgb: "FF00A000" };
+          worksheet[cellAddress].s.font.bold = true;
+        } else if (cellValue === "Inactive") {
+          worksheet[cellAddress].s.font.color = { rgb: "FFFF0000" };
+        }
+      }
+
+      if (headerValue === "Role" && worksheet[cellAddress].v === "ADMIN") {
+        worksheet[cellAddress].s.font.color = { rgb: "FF2C5FAA" };
+        worksheet[cellAddress].s.font.bold = true;
+      }
+    }
+  }
+
+  // Set column widths based on content
+  const colWidths = isDetailed
+    ? // Detailed sheet widths
+      [
+        { wch: 6 }, // No.
+        { wch: 12 }, // Student ID
+        { wch: 15 }, // First Name
+        { wch: 15 }, // Middle Name
+        { wch: 15 }, // Last Name
+        { wch: 25 }, // Email
+        { wch: 15 }, // Phone Number
+        { wch: 12 }, // Account Role
+        { wch: 12 }, // Account Status
+        { wch: 10 }, // Gender
+        { wch: 12 }, // Date of Birth
+        { wch: 8 }, // Age
+        { wch: 15 }, // National ID
+        { wch: 20 }, // Occupation
+        { wch: 12 }, // Marriage Status
+        { wch: 12 }, // Has Disability
+        { wch: 15 }, // Disability Type
+        { wch: 12 }, // Country
+        { wch: 15 }, // Region
+        { wch: 15 }, // Zone
+        { wch: 15 }, // Woreda
+        { wch: 20 }, // Church
+        { wch: 15 }, // Parent Status
+        { wch: 20 }, // Parent Full Name
+        { wch: 20 }, // Parent Email
+        { wch: 15 }, // Parent Phone
+        { wch: 12 }, // Join Date
+        { wch: 18 }, // Membership Duration
+        { wch: 12 }, // Last Login
+        { wch: 18 }, // Days Since Last Login
+        { wch: 12 }, // Account Created
+      ]
+    : // Main sheet widths
+      [
+        { wch: 6 }, // No.
+        { wch: 12 }, // Student ID
+        { wch: 25 }, // Full Name
+        { wch: 25 }, // Email
+        { wch: 15 }, // Phone
+        { wch: 10 }, // Role
+        { wch: 10 }, // Status
+        { wch: 8 }, // Sex
+        { wch: 12 }, // Date of Birth
+        { wch: 15 }, // National ID
+        { wch: 20 }, // Occupation
+        { wch: 12 }, // Marriage Status
+        { wch: 10 }, // Disability
+        { wch: 15 }, // Disability Type
+        { wch: 25 }, // Location
+        { wch: 20 }, // Church
+        { wch: 20 }, // Parent/Guardian
+        { wch: 15 }, // Parent Phone
+        { wch: 12 }, // Join Date
+        { wch: 12 }, // Last Login
+      ];
+
+  worksheet["!cols"] = colWidths;
+
+  // Freeze header row
+  worksheet["!freeze"] = { x: 0, y: 1 };
+};
+
+const enhanceStatsWorksheetStyle = (
+  XLSX: any,
+  worksheet: any,
+  dataLength: number
+) => {
+  const range = XLSX.utils.decode_range(worksheet["!ref"]);
+
+  for (let R = range.s.r; R <= range.e.r; R++) {
+    for (let C = range.s.c; C <= range.e.c; C++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+      if (!worksheet[cellAddress]) continue;
+
+      const cellValue = worksheet[cellAddress].v;
+
+      // Section headers
+      if (
+        typeof cellValue === "string" &&
+        (cellValue.includes("STATISTICS") ||
+          cellValue.includes("BREAKDOWN") ||
+          cellValue.includes("DISTRIBUTION"))
+      ) {
+        worksheet[cellAddress].s = {
+          fill: { fgColor: { rgb: "FF2C5FAA" } },
+          font: {
+            name: "Arial",
+            sz: 14,
+            bold: true,
+            color: { rgb: "FFFFFFFF" },
+          },
+          alignment: { horizontal: "left" },
+        };
+      }
+      // Metric labels
+      else if (
+        C === 0 &&
+        R > 0 &&
+        worksheet[XLSX.utils.encode_cell({ r: R, c: 1 })]?.v
+      ) {
+        worksheet[cellAddress].s = {
+          font: {
+            name: "Calibri",
+            sz: 11,
+            bold: true,
+            color: { rgb: "FF333333" },
+          },
+          fill: { fgColor: { rgb: "FFF0F4FF" } },
+        };
+      }
+      // Metric values
+      else if (C === 1 && R > 0) {
+        worksheet[cellAddress].s = {
+          font: { name: "Calibri", sz: 11, color: { rgb: "FF2C5FAA" } },
+          alignment: { horizontal: "right" },
+        };
+      }
+    }
+  }
+
+  worksheet["!cols"] = [{ wch: 30 }, { wch: 15 }];
+};
+
+// ==================== UTILITY FUNCTIONS ====================
+const formatDate = (date: string | Date): string => {
+  return new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+const formatPhoneNumber = (phone: string): string => {
+  // Basic phone formatting
+  const cleaned = phone.replace(/\D/g, "");
+  if (cleaned.length === 10) {
+    return `+1 (${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(
+      6
+    )}`;
+  }
+  return phone;
+};
+
+const formatMarriageStatus = (status: string): string => {
+  const statusMap: { [key: string]: string } = {
+    single: "Single",
+    married: "Married",
+    divorced: "Divorced",
+    widowed: "Widowed",
+  };
+  return statusMap[status] || status;
+};
+
+const formatParentStatus = (status: string): string => {
+  const statusMap: { [key: string]: string } = {
+    both: "Both Parents",
+    mother: "Mother Only",
+    father: "Father Only",
+    guardian: "Guardian",
+  };
+  return statusMap[status] || status;
+};
+
+const calculateAge = (birthDate: string | Date): number => {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+};
+
+const calculateMembershipDuration = (joinDate: string | Date): string => {
+  const today = new Date();
+  const join = new Date(joinDate);
+  const months =
+    (today.getFullYear() - join.getFullYear()) * 12 +
+    today.getMonth() -
+    join.getMonth();
+
+  if (months < 12) {
+    return `${months} month${months !== 1 ? "s" : ""}`;
+  } else {
+    const years = Math.floor(months / 12);
+    const remainingMonths = months % 12;
+    return `${years} year${years !== 1 ? "s" : ""}${
+      remainingMonths > 0
+        ? `, ${remainingMonths} month${remainingMonths !== 1 ? "s" : ""}`
+        : ""
+    }`;
+  }
+};
+
+const calculateDaysSince = (date: string | Date): number => {
+  const today = new Date();
+  const lastDate = new Date(date);
+  const diffTime = Math.abs(today.getTime() - lastDate.getTime());
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
+const calculateStatistics = (users: User[]) => {
+  const stats = {
+    totalUsers: users.length,
+    activeUsers: users.filter((u) => u.status === "active").length,
+    inactiveUsers: users.filter((u) => u.status === "inactive").length,
+    admins: users.filter((u) => u.role === "admin").length,
+    regularUsers: users.filter((u) => u.role === "user").length,
+    maleUsers: users.filter((u) => u.sex === "male").length,
+    femaleUsers: users.filter((u) => u.sex === "female").length,
+    disabledUsers: users.filter((u) => u.disability).length,
+    averageAge: 0,
+    marriageStats: {
+      single: users.filter((u) => u.marriageStatus === "single").length,
+      married: users.filter((u) => u.marriageStatus === "married").length,
+      divorced: users.filter((u) => u.marriageStatus === "divorced").length,
+      widowed: users.filter((u) => u.marriageStatus === "widowed").length,
     },
-    headStyles: {
-      fillColor: [60, 120, 216],
-      textColor: 255,
-    },
-    alternateRowStyles: {
-      fillColor: [245, 245, 245],
-    },
-    margin: { top: 40, left: 10, right: 10 },
-    didDrawPage: () => {
-      const page = "Page " + doc.internal.getNumberOfPages();
-      doc.setFontSize(10);
-      doc.setTextColor(120, 120, 120);
-      doc.text(page, 190, 10, { align: "right" });
-    },
+    regionalDistribution: {} as { [key: string]: number },
+  };
+
+  // Calculate average age
+  const ages = users
+    .filter((u) => u.dateOfBirth)
+    .map((u) => calculateAge(u.dateOfBirth));
+  stats.averageAge =
+    ages.length > 0
+      ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length)
+      : 0;
+
+  // Calculate regional distribution
+  users.forEach((user) => {
+    stats.regionalDistribution[user.region] =
+      (stats.regionalDistribution[user.region] || 0) + 1;
   });
 
-  const date = new Date().toISOString().slice(0, 10);
-  doc.save("users_report_" + date + ".pdf");
-
-  toast.success("Users exported successfully");
+  return stats;
 };
 
 export default exportUsers;

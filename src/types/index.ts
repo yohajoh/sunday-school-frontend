@@ -1,32 +1,48 @@
+// types/index.ts
 export interface User {
   id: string;
   studentId: string;
   email: string;
+  password: string;
   role: "admin" | "user";
+
+  // Personal Information
   firstName: string;
-  middleName: string;
+  middleName?: string;
   lastName: string;
   sex: "male" | "female";
   phoneNumber: string;
+
+  // Disability Information
   disability: boolean;
   disabilityType?: string;
-  dateOfBirth: string;
+
+  // Personal Details
+  dateOfBirth: string | Date;
+  nationalId: string;
+  occupation?: string;
+  marriageStatus: "single" | "married" | "divorced" | "widowed";
+
+  // Location Information
   country: string;
   region: string;
-  zone: string;
-  woreda: string;
+  zone?: string;
+  woreda?: string;
   church: string;
-  occupation: string;
-  marriageStatus: "single" | "married" | "divorced" | "widowed";
+
+  // Parent/Guardian Information
   parentStatus: "both" | "mother" | "father" | "guardian";
   parentFullName: string;
-  parentEmail: string;
+  parentEmail?: string;
   parentPhoneNumber: string;
-  nationalId: string;
+
+  // Account Management
   avatar?: string;
-  joinDate: string;
+  joinDate: string | Date;
   status: "active" | "inactive";
-  lastLogin?: string;
+  lastLogin?: string | Date;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 }
 
 export interface Asset {

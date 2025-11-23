@@ -65,8 +65,6 @@ export const Users: React.FC = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const API = import.meta.env.VITE_API_URL;
-  console.log(API);
-
   const {
     data: userData,
     isLoading,

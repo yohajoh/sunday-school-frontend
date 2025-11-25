@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useApp } from "@/contexts/AppContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Asset } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -24,7 +23,6 @@ import {
   Edit,
   Trash2,
   Plus,
-  Filter,
   Package,
   Sparkles,
   Shield,
@@ -48,12 +46,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAssetMutation } from "@/hooks/useAssetMutation";
 import { useQuery } from "@tanstack/react-query";
+import { useAssetMutations } from "@/hooks/useAssetMutation";
+import exportAssets from "@/lib/exportAssets";
 
 export const Assets: React.FC = () => {
   const { t } = useLanguage();
-  const { assets, deleteAsset, users } = useApp();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -67,7 +65,7 @@ export const Assets: React.FC = () => {
   const [editAsset, setEditAsset] = useState<Asset | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  const { createAsset } = useAssetMutation();
+  const { createAsset, updateAsset, deleteAsset } = useAssetMutations();
 
   const API = import.meta.env.VITE_API_URL;
   const {
@@ -154,13 +152,14 @@ export const Assets: React.FC = () => {
       return;
     }
 
-    selectedAssets.forEach((id) => deleteAsset(id));
+    selectedAssets.forEach((id) => deleteAsset.mutate(id));
     setSelectedAssets([]);
     toast.success(`${selectedAssets.length} asset(s) deleted successfully`);
   };
 
-  const handleDeleteAsset = (asset: Asset) => {
-    // deleteAsset(asset.id);
+  const handleDeleteAsset = (asset: any) => {
+    console.log(asset);
+    deleteAsset.mutate(asset._id);
     toast.success("Asset deleted successfully");
   };
 
@@ -171,6 +170,21 @@ export const Assets: React.FC = () => {
         setIsCreateDialogOpen(false);
       },
     });
+  };
+
+  const handleAssetEdit = (asset: Asset) => {
+    updateAsset.mutate(
+      { id: editAsset?._id, updates: asset },
+      {
+        onSuccess: () => {
+          setEditAsset(null);
+          toast.success("Asset updated");
+        },
+        onError: (err) => {
+          toast.error(err.message);
+        },
+      }
+    );
   };
 
   const getStatusColor = (status: string) => {
@@ -203,32 +217,21 @@ export const Assets: React.FC = () => {
     }
   };
 
-  const getAssignedUserName = (userId?: string) => {
-    if (!userId) return t("assets.notAssigned");
-    const user = users.find((u: Asset) => u.id === userId);
-    return user
-      ? `${user.firstName} ${user.lastName}`
-      : t("assets.unknownUser");
+  // const getAssignedUserName = (userId?: string) => {
+  //   if (!userId) return t("assets.notAssigned");
+  //   const user = users.find((u: Asset) => u.id === userId);
+  //   return user
+  //     ? `${user.firstName} ${user.lastName}`
+  //     : t("assets.unknownUser");
+  // };
+
+  const handleExportAssets = () => {
+    exportAssets(filteredAssets);
   };
 
-  const exportAssets = () => {
-    const data = filteredAssets.map((asset) => ({
-      "Asset Code": asset.code,
-      Name: asset.name,
-      Category: asset.category,
-      Status: asset.status,
-      Condition: asset.condition,
-      "Assigned To": getAssignedUserName(asset.assignedTo),
-      Location: asset.location,
-      "Purchase Date": asset.purchaseDate,
-      "Purchase Price": asset.purchasePrice,
-    }));
-
-    console.log("Exporting assets:", data);
-    toast.success("Assets exported successfully");
-  };
-
-  const categories = [...new Set(assets.map((asset) => asset.category))];
+  const categories = [
+    ...new Set(assetData?.map((asset: Asset) => asset.category)),
+  ];
 
   return (
     <div className="space-y-6">
@@ -257,7 +260,7 @@ export const Assets: React.FC = () => {
                   <Shield className="h-4 w-4 sm:h-6 sm:w-6 text-amber-400" />
                   <div className="min-w-0">
                     <p className="text-lg sm:text-2xl font-bold truncate">
-                      {assets.length}
+                      {assetData?.length}
                     </p>
                     <p className="text-xs text-amber-200">
                       {t("assets.totalAssets")}
@@ -268,7 +271,11 @@ export const Assets: React.FC = () => {
                   <Zap className="h-4 w-4 sm:h-6 sm:w-6 text-orange-400" />
                   <div className="min-w-0">
                     <p className="text-lg sm:text-2xl font-bold truncate">
-                      {assets.filter((a) => a.status === "available").length}
+                      {
+                        assetData?.filter(
+                          (a: Asset) => a.status === "available"
+                        ).length
+                      }
                     </p>
                     <p className="text-xs text-orange-200">
                       {t("assets.available")}
@@ -279,7 +286,10 @@ export const Assets: React.FC = () => {
                   <Sparkles className="h-4 w-4 sm:h-6 sm:w-6 text-emerald-400" />
                   <div className="min-w-0">
                     <p className="text-lg sm:text-2xl font-bold truncate">
-                      {assets.filter((a) => a.status === "assigned").length}
+                      {
+                        assetData?.filter((a: Asset) => a.status === "assigned")
+                          .length
+                      }
                     </p>
                     <p className="text-xs text-emerald-200">
                       {t("assets.assigned")}
@@ -342,7 +352,7 @@ export const Assets: React.FC = () => {
         <div className="flex flex-col sm:flex-row gap-3">
           <Button
             variant="outline"
-            onClick={exportAssets}
+            onClick={handleExportAssets}
             className="flex items-center gap-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 text-sm sm:text-base order-2 sm:order-1"
           >
             <Download className="h-4 w-4" />
@@ -723,7 +733,7 @@ export const Assets: React.FC = () => {
             <AssetForm
               asset={editAsset}
               mode="edit"
-              onSave={handleAssetSave}
+              onSave={handleAssetEdit}
               onCancel={() => setEditAsset(null)}
             />
           )}

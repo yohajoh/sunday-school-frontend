@@ -63,7 +63,7 @@ export const Users: React.FC = () => {
   const [viewUser, setViewUser] = useState<User | null>(null);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const { createUser } = useUserMutation();
+  const { createUser, deleteUser, updateUser } = useUserMutation();
 
   const API = import.meta.env.VITE_API_URL;
   const {
@@ -173,6 +173,26 @@ export const Users: React.FC = () => {
         setIsCreateDialogOpen(false);
       },
     });
+  };
+
+  const handleUserEdit = (user: User) => {
+    console.log(editUser);
+    updateUser.mutate(
+      { id: editUser?._id, updates: user },
+      {
+        onSuccess: () => {
+          setEditUser(null);
+          toast.success("User updated");
+        },
+        onError: (err) => {
+          toast.error(err.message);
+        },
+      }
+    );
+  };
+
+  const handleDeleteUser = (user: User) => {
+    deleteUser.mutate(user._id);
   };
 
   const getStatusColor = (status: string) => {
@@ -583,7 +603,7 @@ export const Users: React.FC = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          // onClick={() => handleDeleteUser(user)}
+                          onClick={() => handleDeleteUser(user)}
                           // disabled={user.id === currentUser?.id}
                           className="h-8 w-8 sm:h-9 sm:w-9 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-0 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                         >
@@ -722,7 +742,7 @@ export const Users: React.FC = () => {
             <UserForm
               user={editUser}
               mode="edit"
-              onSave={handleUserSave}
+              onSave={handleUserEdit}
               onCancel={() => setEditUser(null)}
             />
           )}

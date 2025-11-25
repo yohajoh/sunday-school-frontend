@@ -11,7 +11,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requireAdmin = false,
 }) => {
-  const { user, isLoading } = useAuth();
+  const { user, LoggedOut, isLoading } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -25,11 +25,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  if (!user) {
+  if (LoggedOut) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (user.role === "admin") {
+  if (user?.role === "admin") {
     return <Navigate to="/admin" replace />;
   }
   return <>{children}</>;

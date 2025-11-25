@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { UserForm } from "@/components/forms/UserForm";
@@ -16,52 +16,24 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useUserMutation } from "@/hooks/useUserMutations";
 
 export const Signup: React.FC = () => {
   const { t } = useLanguage();
-  const { signup } = useAuth();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const { createUser } = useUserMutation();
+  const { setLoggedOut } = useAuth();
 
   const handleSubmit = async (userData: User) => {
-    setIsLoading(true);
-
-    try {
-      // Prepare the data for signup (matching the AuthContext expected structure)
-      const signupData = {
-        firstName: userData.firstName,
-        middleName: userData.middleName,
-        lastName: userData.lastName,
-        email: userData.email,
-        phoneNumber: userData.phoneNumber,
-        sex: userData.sex,
-        disability: userData.disability,
-        disabilityType: userData.disabilityType,
-        dateOfBirth: userData.dateOfBirth,
-        country: userData.country,
-        region: userData.region,
-        zone: userData.zone,
-        woreda: userData.woreda,
-        church: userData.church,
-        occupation: userData.occupation,
-        marriageStatus: userData.marriageStatus,
-        parentStatus: userData.parentStatus,
-        parentFullName: userData.parentFullName,
-        parentEmail: userData.parentEmail,
-        parentPhoneNumber: userData.parentPhoneNumber,
-        nationalId: userData.nationalId,
-      };
-
-      await signup(signupData);
-      toast.success("Welcome to Sunday School!", {
-        description: "Your account has been created successfully.",
-      });
-      navigate("/");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to create account");
-    } finally {
-      setIsLoading(false);
-    }
+    createUser.mutate(userData, {
+      onSuccess: () => {
+        toast.success("Welcome to Sunday School!", {
+          description: "Your account has been created successfully.",
+        });
+        setLoggedOut("kjkljk");
+        navigate("/");
+      },
+    });
   };
 
   const handleCancel = () => {

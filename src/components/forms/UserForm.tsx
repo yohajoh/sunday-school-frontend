@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { User } from "@/types";
@@ -28,12 +28,14 @@ import {
 } from "lucide-react";
 
 interface UserFormProps {
+  user: User;
   onSave: (user: User) => void;
   onCancel?: () => void;
   mode?: "create" | "edit";
 }
 
 export const UserForm: React.FC<UserFormProps> = ({
+  user,
   onSave,
   onCancel,
   mode = "create",
@@ -45,9 +47,18 @@ export const UserForm: React.FC<UserFormProps> = ({
     watch,
     formState: { errors, isSubmitting },
     control,
+    setValue,
   } = useForm<User>();
 
   const disibilityValue = watch("disability");
+
+  useEffect(() => {
+    if (user) {
+      Object.keys(user).forEach((key) => {
+        setValue(key as keyof User, user[key as keyof User]);
+      });
+    }
+  }, [user, setValue]);
 
   const onSubmitForm: SubmitHandler<User> = (data) => {
     onSave(data);

@@ -133,7 +133,7 @@ export const AssetForm: React.FC<AssetFormProps> = ({
         return;
       }
       const assetData: Asset = {
-        id: asset?.id || Date.now().toString(),
+        id: asset?.id,
         code: data.code!,
         name: data.name!,
         description: data.description!,

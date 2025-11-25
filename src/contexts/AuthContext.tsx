@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  Dispatch,
+} from "react";
 import { User } from "@/types";
 import { useApp } from "./AppContext";
 
@@ -8,6 +14,8 @@ interface AuthContextType {
   signup: (userData: any) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
+  LoggedOut: string | null;
+  setLoggedOut: Dispatch<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -76,6 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { addUser } = useApp();
+  const [LoggedOut, setLoggedOut] = useState<string | null>(null);
 
   useEffect(() => {
     // Check for stored user session on app start
@@ -105,6 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       throw new Error("Invalid email or password");
     }
 
+    setLoggedOut("kjklj");
     setUser(foundUser);
 
     setIsLoading(false);
@@ -121,34 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       throw new Error("User with this email already exists");
     }
 
-    const newUser: User = {
-      id: Date.now().toString(),
-      studentId: `USER${Date.now().toString().slice(-6)}`,
-      email: userData.email,
-      role: "user",
-      firstName: userData.firstName,
-      middleName: userData.middleName,
-      lastName: userData.lastName,
-      sex: userData.sex,
-      phoneNumber: userData.phoneNumber,
-      disability: userData.disability,
-      disabilityType: userData.disabilityType,
-      dateOfBirth: userData.dateOfBirth,
-      country: userData.country,
-      region: userData.region,
-      zone: userData.zone,
-      woreda: userData.woreda,
-      church: userData.church,
-      occupation: userData.occupation,
-      marriageStatus: userData.marriageStatus,
-      parentStatus: userData.parentStatus,
-      parentFullName: userData.parentFullName,
-      parentEmail: userData.parentEmail,
-      parentPhoneNumber: userData.parentPhoneNumber,
-      nationalId: userData.nationalId,
-      joinDate: new Date().toISOString().split("T")[0],
-      status: "active",
-    };
+    const newUser: User = userData;
 
     // Add to global state
     addUser(newUser);
@@ -160,11 +143,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const logout = () => {
-    setUser(null);
+    setLoggedOut("kjkjkj");
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        signup,
+        logout,
+        isLoading,
+        LoggedOut,
+        setLoggedOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

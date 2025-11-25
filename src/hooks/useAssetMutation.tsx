@@ -42,8 +42,92 @@ export const useCreateAsset = (): UseMutationResult<
   });
 };
 
-export const useAssetMutation = () => {
-  const createAsset = useCreateAsset();
+// UPDATE ASSET
+export const useUpdateAsset = (): UseMutationResult<
+  Asset,
+  Error,
+  Asset,
+  unknown
+> => {
+  const queryClient = useQueryClient();
+  const { t } = useLanguage();
 
-  return { createAsset, isPending: createAsset.isPending };
+  return useMutation({
+    mutationFn: async (assetData: Asset) => {
+      console.log(assetData);
+      const res = await fetch(
+        `${API}/api/sunday-school/assets/${assetData.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(assetData.updates),
+        }
+      );
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message);
+      }
+
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assets"] });
+      toast.success(t("assetForm.assetUpdated"));
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update asset: ${error.message}`);
+    },
+  });
+};
+
+// DELETE ASSET
+export const useDeleteAsset = (): UseMutationResult<
+  void,
+  Error,
+  string,
+  unknown
+> => {
+  const queryClient = useQueryClient();
+  const { t } = useLanguage();
+
+  return useMutation({
+    mutationFn: async (assetId: string) => {
+      const res = await fetch(`${API}/api/sunday-school/assets/${assetId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message);
+      }
+
+      return;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assets"] });
+      toast.success(t("assetForm.assetDeleted"));
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to delete asset: ${error.message}`);
+    },
+  });
+};
+
+// Combined hook
+export const useAssetMutations = () => {
+  const createAsset = useCreateAsset();
+  const updateAsset = useUpdateAsset();
+  const deleteAsset = useDeleteAsset();
+
+  return {
+    createAsset,
+    updateAsset,
+    deleteAsset,
+    isCreating: createAsset.isPending,
+    isUpdating: updateAsset.isPending,
+    isDeleting: deleteAsset.isPending,
+  };
 };

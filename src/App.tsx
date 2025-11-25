@@ -76,9 +76,9 @@ function App() {
                     <Route
                       path="/"
                       element={
-                        // <ProtectedRoute>
-                        <UserLayout />
-                        // </ProtectedRoute>
+                        <ProtectedRoute>
+                          <UserLayout />
+                        </ProtectedRoute>
                       }
                     >
                       <Route index element={<UserDashboard />} />

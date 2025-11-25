@@ -25,7 +25,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  if (LoggedOut) {
+  if (!LoggedOut) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

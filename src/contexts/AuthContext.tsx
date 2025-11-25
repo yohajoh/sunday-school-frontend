@@ -143,7 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const logout = () => {
-    setLoggedOut("kjkjkj");
+    setLoggedOut(null);
   };
 
   return (

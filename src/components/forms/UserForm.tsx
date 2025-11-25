@@ -26,7 +26,6 @@ import {
   Sparkles,
   Lock,
 } from "lucide-react";
-import { useUserMutation } from "@/hooks/useUserMutations";
 
 interface UserFormProps {
   onSave: (user: User) => void;
@@ -40,7 +39,6 @@ export const UserForm: React.FC<UserFormProps> = ({
   mode = "create",
 }) => {
   const { t } = useLanguage();
-  const { isPending } = useUserMutation();
 
   const {
     handleSubmit,
@@ -622,10 +620,10 @@ export const UserForm: React.FC<UserFormProps> = ({
 
             <Button
               type="submit"
-              disabled={isPending}
+              disabled={isSubmitting}
               className="bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 text-white shadow-lg hover:shadow-xl rounded-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isPending ? (
+              {isSubmitting ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   {t("userForm.saving")}

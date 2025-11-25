@@ -167,9 +167,12 @@ export const Users: React.FC = () => {
   };
 
   const handleUserSave = (user: User) => {
-    createUser.mutate(user);
+    createUser.mutate(user, {
+      onSuccess: () => {
+        setIsCreateDialogOpen(false);
+      },
+    });
     // setEditUser(null);
-    // setIsCreateDialogOpen(false);
   };
 
   const getStatusColor = (status: string) => {

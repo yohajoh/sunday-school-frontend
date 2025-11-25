@@ -26,7 +26,8 @@ export const useCreateUser = (): UseMutationResult<
       });
 
       if (!res.ok) {
-        throw new Error(`Failed to create user: ${res.statusText}`);
+        const errData = await res.json();
+        throw new Error(errData.message);
       }
 
       return await res.json();

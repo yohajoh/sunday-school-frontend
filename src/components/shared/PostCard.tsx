@@ -1,3 +1,4 @@
+// components/PostCard.tsx
 import React, { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Post, Comment } from "@/types";
@@ -18,10 +19,10 @@ import { toast } from "sonner";
 
 interface PostCardProps {
   post: Post;
+  comments?: any[]; // Comments passed from parent component
   onUpdate?: (post: Post) => void;
   showActions?: boolean;
   currentUser?: any;
-  // Comment functionality props
   onToggleComments?: () => void;
   showComments?: boolean;
   commentInput?: string;
@@ -32,10 +33,10 @@ interface PostCardProps {
 
 export const PostCard: React.FC<PostCardProps> = ({
   post,
+  comments = [], // Default to empty array
   onUpdate,
   showActions = true,
   currentUser,
-  // Comment functionality props
   onToggleComments,
   showComments = false,
   commentInput = "",
@@ -49,9 +50,10 @@ export const PostCard: React.FC<PostCardProps> = ({
 
   // Check if current user has liked this post
   const isLiked = currentUser
-    ? (post.likes || []).includes(currentUser.id)
+    ? (post.likes || []).some(
+        (like: any) => like._id === currentUser.id || like === currentUser.id
+      )
     : false;
-  const isAuthor = currentUser?.id === post.authorId;
 
   // Use external comment state or local state
   const commentText =
@@ -65,9 +67,6 @@ export const PostCard: React.FC<PostCardProps> = ({
 
     if (onLikePost) {
       onLikePost(isLiked);
-    } else {
-      // Fallback behavior
-      toast.success(isLiked ? "Post unliked!" : "Post liked!");
     }
   };
 
@@ -86,10 +85,6 @@ export const PostCard: React.FC<PostCardProps> = ({
     try {
       if (onCommentSubmit) {
         onCommentSubmit();
-      } else {
-        // Fallback behavior
-        toast.success("Comment added!");
-        setLocalCommentText("");
       }
     } catch (error) {
       toast.error("Failed to add comment");
@@ -260,26 +255,24 @@ export const PostCard: React.FC<PostCardProps> = ({
             <img
               src={post.image}
               alt={post.title}
-              className="w-full h-48 sm:h-64 object-cover hover:scale-105 transition-transform duration-500"
+              className="w-full h-48 sm:h-80 object-cover hover:scale-105 transition-transform duration-500"
             />
           </div>
         )}
 
-        {/* Stats */}
+        {/* Stats - Now showing actual counts */}
         <div className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex-wrap">
           <span className="font-semibold">
             {(post.likes || []).length} Likes
           </span>
           <span>•</span>
-          <span className="font-semibold">
-            {(post.comments || []).length} Comments
-          </span>
+          <span className="font-semibold">{comments.length} Comments</span>
           <span>•</span>
           <span className="font-semibold">{post.shares || 0} Shares</span>
         </div>
       </div>
 
-      {/* Actions - Show actions for normal users */}
+      {/* Actions */}
       {showActions && (
         <>
           <div className="px-4 sm:px-6 pb-4 border-b border-slate-200 dark:border-slate-700">
@@ -296,7 +289,7 @@ export const PostCard: React.FC<PostCardProps> = ({
               >
                 <Heart
                   className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                    isLiked ? "fill-current" : ""
+                    isLiked ? "fill-red-600 dark:fill-red-400" : ""
                   }`}
                 />
                 <span className="hidden sm:inline">
@@ -317,7 +310,7 @@ export const PostCard: React.FC<PostCardProps> = ({
               >
                 <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span className="hidden sm:inline">Comment</span>
-                <span>({(post.comments || []).length})</span>
+                <span>({comments.length})</span>
               </Button>
 
               <Button
@@ -335,9 +328,86 @@ export const PostCard: React.FC<PostCardProps> = ({
           {/* Comments Section */}
           {showComments && (
             <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 bg-slate-50 dark:bg-slate-700/30 rounded-b-2xl sm:rounded-b-3xl">
-              {/* Add Comment */}
+              {/* Comments List - Displayed ABOVE the comment input */}
+              {comments.length > 0 ? (
+                <div className="space-y-3 sm:space-y-4">
+                  <h4 className="font-semibold text-slate-800 dark:text-white text-base sm:text-lg">
+                    Comments ({comments.length})
+                  </h4>
+
+                  {/* Scrollable comments container */}
+                  <div
+                    className={`space-y-3 sm:space-y-4 ${
+                      comments.length > 3
+                        ? "max-h-64 sm:max-h-80 overflow-y-auto pr-2"
+                        : ""
+                    }`}
+                  >
+                    {comments.map((comment: any) => (
+                      <div
+                        key={comment._id}
+                        className="flex gap-3 sm:gap-4 group"
+                      >
+                        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 shadow-md">
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500/20 to-violet-500/20 text-slate-700 dark:text-slate-300 font-semibold text-xs sm:text-sm">
+                            {/* Use actual comment author's initials */}
+                            {comment.author
+                              ?.split(" ")
+                              .map((n: string) => n[0])
+                              .join("")
+                              .toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 bg-white dark:bg-slate-700/50 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-slate-200 dark:border-slate-600 group-hover:border-slate-300 dark:group-hover:border-slate-500 transition-all duration-300 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2">
+                            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                              <p className="font-semibold text-slate-800 dark:text-white text-sm sm:text-base truncate">
+                                {/* Display the ACTUAL comment author name from fetched data */}
+                                {comment.author || "User"}
+                              </p>
+                              <span className="text-xs text-slate-500 dark:text-slate-400 flex-shrink-0">
+                                {getTimeAgo(comment.createdAt)}
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-sm sm:text-base break-words">
+                            {comment.text}
+                          </p>
+
+                          {/* Show if this comment is from the current user */}
+                          {currentUser &&
+                            comment.authorId === currentUser.id && (
+                              <div className="mt-2">
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+                                >
+                                  Your comment
+                                </Badge>
+                              </div>
+                            )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Show message if there are more than 3 comments */}
+                  {comments.length > 3 && (
+                    <div className="text-center text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-200 dark:border-slate-600">
+                      Scroll to see {comments.length - 3} more comment
+                      {comments.length - 3 > 1 ? "s" : ""}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-slate-500 dark:text-slate-400">
+                  No comments yet. Be the first to comment!
+                </div>
+              )}
+
+              {/* Add Comment - Displayed BELOW the comments list */}
               {currentUser && (
-                <div className="flex gap-3 sm:gap-4">
+                <div className="flex gap-3 sm:gap-4 pt-4 border-t border-slate-200 dark:border-slate-600">
                   <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 shadow-md">
                     <AvatarFallback className="bg-gradient-to-br from-blue-500 to-violet-500 text-white font-semibold text-xs sm:text-sm">
                       {currentUser
@@ -369,47 +439,6 @@ export const PostCard: React.FC<PostCardProps> = ({
                       </span>
                     </Button>
                   </div>
-                </div>
-              )}
-
-              {/* Comments List */}
-              {post.comments && post.comments.length > 0 ? (
-                <div className="space-y-3 sm:space-y-4">
-                  <h4 className="font-semibold text-slate-800 dark:text-white text-base sm:text-lg">
-                    Comments ({(post.comments || []).length})
-                  </h4>
-                  {post.comments.map((comment: any) => (
-                    <div key={comment.id} className="flex gap-3 sm:gap-4 group">
-                      <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 shadow-md">
-                        <AvatarFallback className="bg-gradient-to-br from-blue-500/20 to-violet-500/20 text-slate-700 dark:text-slate-300 font-semibold text-xs sm:text-sm">
-                          {comment.author
-                            ?.split(" ")
-                            .map((n: string) => n[0])
-                            .join("")
-                            .toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 bg-white dark:bg-slate-700/50 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-slate-200 dark:border-slate-600 group-hover:border-slate-300 dark:group-hover:border-slate-500 transition-all duration-300 min-w-0">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2">
-                          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                            <p className="font-semibold text-slate-800 dark:text-white text-sm sm:text-base truncate">
-                              {comment.author || "User"}
-                            </p>
-                            <span className="text-xs text-slate-500 dark:text-slate-400 flex-shrink-0">
-                              {getTimeAgo(comment.createdAt)}
-                            </span>
-                          </div>
-                        </div>
-                        <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-sm sm:text-base break-words">
-                          {comment.text}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-4 text-slate-500 dark:text-slate-400">
-                  No comments yet. Be the first to comment!
                 </div>
               )}
             </div>

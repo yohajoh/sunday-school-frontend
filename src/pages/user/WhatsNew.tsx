@@ -1,3 +1,4 @@
+// components/WhatsNew.tsx
 import React, { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PostCard } from "@/components/shared/PostCard";
@@ -29,15 +30,14 @@ export const WhatsNew: React.FC = () => {
     {}
   );
 
-  // Mock current user for demo
   const currentUser = {
-    id: "demo-user-123",
+    id: "69181ab1b5ad009032921d2a",
     firstName: "Current",
     lastName: "User",
     email: "user@example.com",
   };
 
-  // Fetch posts using React Query
+  // Fetch posts
   const {
     data: posts = [],
     isLoading,
@@ -50,30 +50,62 @@ export const WhatsNew: React.FC = () => {
         throw new Error("Failed to fetch posts");
       }
       const result = await response.json();
-      console.log("Fetched posts:", result.data);
       return result.data;
     },
+  });
+
+  // Fetch all comments for all posts when page loads
+  const { data: allComments = {}, isLoading: commentsLoading } = useQuery({
+    queryKey: ["allComments", posts.length],
+    queryFn: async () => {
+      // Fetch comments for each post
+      const commentsPromises = posts.map(async (post: any) => {
+        try {
+          const response = await fetch(
+            `${API}/api/sunday-school/comments/post/${post._id}`
+          );
+          if (!response.ok) {
+            throw new Error(`Failed to fetch comments for post ${post._id}`);
+          }
+          const result = await response.json();
+          console.log(`Comments for post ${post._id}:`, result.data); // Debug log
+          return { postId: post._id, comments: result.data };
+        } catch (error) {
+          console.error(`Error fetching comments for post ${post._id}:`, error);
+          return { postId: post._id, comments: [] };
+        }
+      });
+
+      const commentsResults = await Promise.all(commentsPromises);
+
+      // Convert to object for easy lookup
+      const commentsMap: { [key: string]: any[] } = {};
+      commentsResults.forEach((result) => {
+        commentsMap[result.postId] = result.comments;
+      });
+
+      console.log("All comments map:", commentsMap); // Debug log
+      return commentsMap;
+    },
+    enabled: posts.length > 0, // Only fetch comments when we have posts
   });
 
   // Add comment mutation
   const addCommentMutation = useMutation({
     mutationFn: async ({
       postId,
-      comment,
+      commentData,
     }: {
       postId: string;
-      comment: any;
+      commentData: any;
     }) => {
-      const response = await fetch(
-        `${API}/api/sunday-school/posts/${postId}/comments`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(comment),
-        }
-      );
+      const response = await fetch(`${API}/api/sunday-school/comments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(commentData),
+      });
 
       if (!response.ok) {
         const error = await response.json();
@@ -83,7 +115,9 @@ export const WhatsNew: React.FC = () => {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate both posts and comments queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["allComments"] });
       toast.success("Comment posted successfully!");
     },
     onError: (error: Error) => {
@@ -122,7 +156,6 @@ export const WhatsNew: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-      toast.success("Post liked!");
     },
     onError: (error: Error) => {
       toast.error("Failed to like post", {
@@ -131,45 +164,7 @@ export const WhatsNew: React.FC = () => {
     },
   });
 
-  // Unlike post mutation
-  const unlikePostMutation = useMutation({
-    mutationFn: async ({
-      postId,
-      userId,
-    }: {
-      postId: string;
-      userId: string;
-    }) => {
-      const response = await fetch(
-        `${API}/api/sunday-school/posts/${postId}/unlike`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ userId }),
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to unlike post");
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      toast.success("Post unliked!");
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to unlike post", {
-        description: error.message,
-      });
-    },
-  });
-
-  // Filter posts for user audience (only published posts for students/all)
+  // Filter posts for user audience
   const userPosts = posts.filter(
     (post: any) =>
       post.status === "published" &&
@@ -203,29 +198,20 @@ export const WhatsNew: React.FC = () => {
       return;
     }
 
-    const newComment = {
-      id: Date.now().toString(),
+    const commentData = {
       postId: postId,
       author: `${currentUser.firstName} ${currentUser.lastName}`,
       authorId: currentUser.id,
       text: commentText,
-      likes: [],
-      replies: [],
-      createdAt: new Date().toISOString(),
     };
 
-    addCommentMutation.mutate({ postId, comment: newComment });
+    addCommentMutation.mutate({ postId, commentData });
 
-    // Clear input
     setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
   };
 
   const handleLikePost = (postId: string, isCurrentlyLiked: boolean) => {
-    if (isCurrentlyLiked) {
-      unlikePostMutation.mutate({ postId, userId: currentUser.id });
-    } else {
-      likePostMutation.mutate({ postId, userId: currentUser.id });
-    }
+    likePostMutation.mutate({ postId, userId: currentUser.id });
   };
 
   const toggleComments = (postId: string) => {
@@ -242,7 +228,6 @@ export const WhatsNew: React.FC = () => {
     }));
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="space-y-6 sm:p-6">
@@ -258,7 +243,6 @@ export const WhatsNew: React.FC = () => {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="space-y-6 sm:p-6">
@@ -415,21 +399,20 @@ export const WhatsNew: React.FC = () => {
           <div className="space-y-6">
             {pinnedPosts.map((post: any) => (
               <PostCard
-                key={post._id || post.id}
+                key={post._id}
                 post={post}
                 currentUser={currentUser}
-                onUpdate={() => {}} // Empty function for user view
-                showActions={true} // Show like/comment buttons for users
-                onToggleComments={() => toggleComments(post._id || post.id)}
-                showComments={showComments[post._id || post.id]}
-                commentInput={commentInputs[post._id || post.id] || ""}
+                comments={allComments[post._id] || []}
+                onUpdate={() => {}}
+                showActions={true}
+                onToggleComments={() => toggleComments(post._id)}
+                showComments={showComments[post._id]}
+                commentInput={commentInputs[post._id] || ""}
                 onCommentChange={(value) =>
-                  handleCommentChange(post._id || post.id, value)
+                  handleCommentChange(post._id, value)
                 }
-                onCommentSubmit={() => handleCommentSubmit(post._id || post.id)}
-                onLikePost={(isLiked) =>
-                  handleLikePost(post._id || post.id, isLiked)
-                }
+                onCommentSubmit={() => handleCommentSubmit(post._id)}
+                onLikePost={(isLiked) => handleLikePost(post._id, isLiked)}
               />
             ))}
           </div>
@@ -453,21 +436,20 @@ export const WhatsNew: React.FC = () => {
           <div className="space-y-6">
             {regularPosts.map((post: any) => (
               <PostCard
-                key={post._id || post.id}
+                key={post._id}
                 post={post}
                 currentUser={currentUser}
-                onUpdate={() => {}} // Empty function for user view
-                showActions={true} // Show like/comment buttons for users
-                onToggleComments={() => toggleComments(post._id || post.id)}
-                showComments={showComments[post._id || post.id]}
-                commentInput={commentInputs[post._id || post.id] || ""}
+                comments={allComments[post._id] || []}
+                onUpdate={() => {}}
+                showActions={true}
+                onToggleComments={() => toggleComments(post._id)}
+                showComments={showComments[post._id]}
+                commentInput={commentInputs[post._id] || ""}
                 onCommentChange={(value) =>
-                  handleCommentChange(post._id || post.id, value)
+                  handleCommentChange(post._id, value)
                 }
-                onCommentSubmit={() => handleCommentSubmit(post._id || post.id)}
-                onLikePost={(isLiked) =>
-                  handleLikePost(post._id || post.id, isLiked)
-                }
+                onCommentSubmit={() => handleCommentSubmit(post._id)}
+                onLikePost={(isLiked) => handleLikePost(post._id, isLiked)}
               />
             ))}
           </div>

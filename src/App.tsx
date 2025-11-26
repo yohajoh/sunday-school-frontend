@@ -1,3 +1,4 @@
+// In your App.js or routing file
 import {
   BrowserRouter as Router,
   Routes,
@@ -22,11 +23,11 @@ import { Posts } from "@/pages/admin/Posts";
 
 // User Pages
 import { UserDashboard } from "@/pages/user/Dashboard";
-import { Profile } from "@/pages/user/Profile";
 import { WhatsNew } from "@/pages/user/WhatsNew";
 
 // Shared Pages
 import { NotFound } from "@/pages/shared/NotFound";
+import { Profile } from "@/pages/shared/Profile"; // Shared profile page
 
 // Layout Components
 import { AdminLayout } from "@/components/layout/AdminLayout";
@@ -69,7 +70,8 @@ function App() {
                       <Route path="users/new" element={<UserForm />} />
                       <Route path="assets" element={<Assets />} />
                       <Route path="posts" element={<Posts />} />
-                      <Route path="profile" element={<Profile />} />
+                      <Route path="profile" element={<Profile />} />{" "}
+                      {/* Shared profile */}
                     </Route>
 
                     {/* User Routes */}
@@ -82,7 +84,8 @@ function App() {
                       }
                     >
                       <Route index element={<UserDashboard />} />
-                      <Route path="profile" element={<Profile />} />
+                      <Route path="profile" element={<Profile />} />{" "}
+                      {/* Shared profile */}
                       <Route path="whats-new" element={<WhatsNew />} />
                     </Route>
 

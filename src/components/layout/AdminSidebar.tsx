@@ -65,7 +65,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       adminOnly: true,
     },
     {
-      to: "/profile",
+      to: "/admin/profile",
       icon: User,
       label: t("nav.profile"),
       adminOnly: false,

@@ -68,6 +68,8 @@ export interface Post {
   comments: Comment[];
   shares: number;
   image?: string;
+  imagePublicId?: string;
+
   isPinned: boolean;
   targetAudience: "all" | "students" | "teachers" | "parents";
   createdAt: string;

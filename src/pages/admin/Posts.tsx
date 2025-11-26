@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useApp } from "@/contexts/AppContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Post } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -38,17 +37,20 @@ import {
   Heart,
   Share2,
   ChevronDown,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { PostForm } from "@/components/forms/PostForm";
-import { PostCard } from "@/components/shared/PostCard";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const Posts: React.FC = () => {
   const { t } = useLanguage();
-  const { posts, deletePost, currentUser } = useApp();
+  const queryClient = useQueryClient();
+  const API = import.meta.env.VITE_API_URL;
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPosts, setSelectedPosts] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -64,6 +66,50 @@ export const Posts: React.FC = () => {
   const [viewPost, setViewPost] = useState<Post | null>(null);
   const [editPost, setEditPost] = useState<Post | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  // Fetch posts using React Query
+  const {
+    data: posts = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["posts"],
+    queryFn: async () => {
+      const response = await fetch(`${API}/api/sunday-school/posts`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch posts");
+      }
+      const result = await response.json();
+      return result.data;
+    },
+  });
+
+  // Delete post mutation
+  const deletePostMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      const response = await fetch(`${API}/api/sunday-school/posts/${postId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to delete post");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      toast.success(t("posts.postDeleted"));
+      setSelectedPosts([]);
+    },
+    onError: (error: Error) => {
+      console.error("❌ Delete post error:", error);
+      toast.error(t("posts.deleteError"), {
+        description: error.message,
+      });
+    },
+  });
 
   const handleSort = (key: keyof Post) => {
     let direction: "asc" | "desc" = "asc";
@@ -92,10 +138,12 @@ export const Posts: React.FC = () => {
     const matchesSearch =
       post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      post.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      post.tags.some((tag) =>
-        tag.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      (post.author &&
+        post.author.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (post.tags &&
+        post.tags.some((tag) =>
+          tag.toLowerCase().includes(searchTerm.toLowerCase())
+        ));
 
     const matchesStatus =
       statusFilter === "all" || post.status === statusFilter;
@@ -111,7 +159,7 @@ export const Posts: React.FC = () => {
     if (selectedPosts.length === filteredPosts.length) {
       setSelectedPosts([]);
     } else {
-      setSelectedPosts(filteredPosts.map((p) => p.id));
+      setSelectedPosts(filteredPosts.map((p) => p._id || p.id));
     }
   };
 
@@ -127,21 +175,19 @@ export const Posts: React.FC = () => {
       return;
     }
 
-    selectedPosts.forEach((id) => deletePost(id));
-    setSelectedPosts([]);
-    toast.success(t("posts.deletedSuccess"));
+    selectedPosts.forEach((id) => deletePostMutation.mutate(id));
   };
 
   const handleDeletePost = (post: Post) => {
-    deletePost(post.id);
-    toast.success(t("posts.postDeleted"));
+    deletePostMutation.mutate(post._id || post.id);
   };
 
   const handlePostSave = (post: Post) => {
     setEditPost(null);
     setIsCreateDialogOpen(false);
+    queryClient.invalidateQueries({ queryKey: ["posts"] });
     toast.success(
-      post.id ? t("postForm.postUpdated") : t("postForm.postCreated")
+      post._id ? t("postForm.postUpdated") : t("postForm.postCreated")
     );
   };
 
@@ -195,9 +241,9 @@ export const Posts: React.FC = () => {
       Category: post.category,
       Status: post.status,
       "Publish Date": post.publishDate,
-      Likes: post.likes.length,
-      Comments: post.comments.length,
-      Shares: post.shares,
+      Likes: post.likes?.length || 0,
+      Comments: post.comments?.length || 0,
+      Shares: post.shares || 0,
       Audience: post.targetAudience,
     }));
 
@@ -252,6 +298,45 @@ export const Posts: React.FC = () => {
     };
     return statusMap[status] || status;
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-400">Loading posts...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="p-4 bg-red-100 dark:bg-red-900/20 rounded-2xl w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+            <FileText className="h-8 w-8 text-red-600 dark:text-red-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
+            Failed to load posts
+          </h3>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
+            {error.message}
+          </p>
+          <Button
+            onClick={() =>
+              queryClient.invalidateQueries({ queryKey: ["posts"] })
+            }
+            className="bg-purple-500 hover:bg-purple-600"
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-full overflow-x-hidden">
@@ -579,13 +664,15 @@ export const Posts: React.FC = () => {
               <TableBody className="max-w-full">
                 {filteredPosts.map((post) => (
                   <TableRow
-                    key={post.id}
+                    key={post._id || post.id}
                     className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all duration-300 group max-w-full"
                   >
                     <TableCell className="py-4 px-2 sm:px-4 max-w-full">
                       <Checkbox
-                        checked={selectedPosts.includes(post.id)}
-                        onCheckedChange={() => toggleSelectPost(post.id)}
+                        checked={selectedPosts.includes(post._id || post.id)}
+                        onCheckedChange={() =>
+                          toggleSelectPost(post._id || post.id)
+                        }
                         className="border-slate-300 dark:border-slate-600 data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500"
                       />
                     </TableCell>
@@ -594,12 +681,31 @@ export const Posts: React.FC = () => {
                         {post.isPinned && (
                           <Pin className="h-3 w-3 sm:h-4 sm:w-4 text-amber-500 flex-shrink-0" />
                         )}
+                        {post.image && (
+                          <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                            <img
+                              src={post.image}
+                              alt={post.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                // If image fails to load, show placeholder
+                                e.currentTarget.style.display = "none";
+                                e.currentTarget.nextElementSibling?.classList.remove(
+                                  "hidden"
+                                );
+                              }}
+                            />
+                            <div className="hidden w-full h-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                              <ImageIcon className="h-4 w-4 text-slate-400" />
+                            </div>
+                          </div>
+                        )}
                         <div className="min-w-0 flex-1 max-w-full">
                           <p className="font-semibold text-slate-800 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors text-sm sm:text-base truncate max-w-full">
                             {post.title}
                           </p>
                           <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-1 hidden sm:block truncate max-w-full">
-                            {post.content.substring(0, 60)}...
+                            {post.content?.substring(0, 60)}...
                           </p>
                         </div>
                       </div>
@@ -609,13 +715,13 @@ export const Posts: React.FC = () => {
                         <Avatar className="h-6 w-6 sm:h-8 sm:w-8 flex-shrink-0">
                           <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs">
                             {post.author
-                              .split(" ")
+                              ?.split(" ")
                               .map((n) => n[0])
-                              .join("")}
+                              .join("") || "U"}
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-slate-700 dark:text-slate-300 text-sm truncate min-w-0 max-w-full">
-                          {post.author}
+                          {post.author || "Unknown Author"}
                         </span>
                       </div>
                     </TableCell>
@@ -646,17 +752,19 @@ export const Posts: React.FC = () => {
                       <div className="flex items-center gap-2 sm:gap-4 text-xs text-slate-600 dark:text-slate-400 max-w-full">
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <Heart className="h-3 w-3 flex-shrink-0" />
-                          <span className="truncate">{post.likes.length}</span>
+                          <span className="truncate">
+                            {post.likes?.length || 0}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <MessageSquare className="h-3 w-3 flex-shrink-0" />
                           <span className="truncate">
-                            {post.comments.length}
+                            {post.comments?.length || 0}
                           </span>
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <Share2 className="h-3 w-3 flex-shrink-0" />
-                          <span className="truncate">{post.shares}</span>
+                          <span className="truncate">{post.shares || 0}</span>
                         </div>
                       </div>
                     </TableCell>
@@ -689,7 +797,10 @@ export const Posts: React.FC = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setEditPost(post)}
+                          onClick={() => {
+                            setEditPost(post);
+                            console.log(editPost);
+                          }}
                           className="h-8 w-8 sm:h-9 sm:w-9 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-0 flex-shrink-0"
                         >
                           <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -731,12 +842,156 @@ export const Posts: React.FC = () => {
         /* Card View */
         <div className="space-y-4 sm:space-y-6 max-w-full overflow-x-hidden">
           {filteredPosts.map((post) => (
-            <div key={post.id} className="max-w-full overflow-x-hidden">
-              <PostCard
-                post={post}
-                onUpdate={handlePostSave}
-                showActions={false}
-              />
+            <div
+              key={post._id || post.id}
+              className="max-w-full overflow-x-hidden"
+            >
+              <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+                {/* Card Header */}
+                <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+                        <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-sm">
+                          {post.author
+                            ?.split(" ")
+                            .map((n) => n[0])
+                            .join("") || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="font-semibold text-slate-800 dark:text-white text-sm sm:text-base">
+                          {post.author || "Unknown Author"}
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {getTimeAgo(post.publishDate)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {post.isPinned && (
+                        <Pin className="h-4 w-4 text-amber-500" />
+                      )}
+                      <Badge
+                        className={`text-xs ${getStatusColor(
+                          post.status
+                        )} text-white`}
+                      >
+                        {getTranslatedStatus(post.status)}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card Content */}
+                <div className="p-4 sm:p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Badge
+                      className={`text-xs ${getCategoryColor(
+                        post.category
+                      )} text-white`}
+                    >
+                      {getTranslatedCategory(post.category)}
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className={`text-xs ${getAudienceColor(
+                        post.targetAudience
+                      )} text-white border-0`}
+                    >
+                      {getTranslatedAudience(post.targetAudience)}
+                    </Badge>
+                  </div>
+
+                  <h2 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white mb-3">
+                    {post.title}
+                  </h2>
+
+                  {post.image && (
+                    <div className="mb-4 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+                      <img
+                        src={post.image}
+                        alt={post.title}
+                        className="w-full h-48 sm:h-64 object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base line-clamp-3 mb-4">
+                    {post.content}
+                  </p>
+
+                  {/* Tags */}
+                  {post.tags && post.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {post.tags.slice(0, 3).map((tag, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="text-xs"
+                        >
+                          #{tag}
+                        </Badge>
+                      ))}
+                      {post.tags.length > 3 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{post.tags.length - 3} more
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Engagement Stats */}
+                  <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1">
+                        <Heart className="h-4 w-4" />
+                        <span>{post.likes?.length || 0}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MessageSquare className="h-4 w-4" />
+                        <span>{post.comments?.length || 0}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Share2 className="h-4 w-4" />
+                        <span>{post.shares || 0}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setViewPost(post)}
+                        className="h-8 text-xs"
+                      >
+                        <Eye className="h-3 w-3 mr-1" />
+                        View
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditPost(post)}
+                        className="h-8 text-xs"
+                      >
+                        <Edit className="h-3 w-3 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeletePost(post)}
+                        className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           ))}
 
@@ -762,11 +1017,81 @@ export const Posts: React.FC = () => {
       <Dialog open={!!viewPost} onOpenChange={() => setViewPost(null)}>
         <DialogContent className="max-w-4xl bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 border-0 shadow-2xl rounded-2xl sm:rounded-3xl mx-4 overflow-hidden w-[95vw]">
           {viewPost && (
-            <PostCard
-              post={viewPost}
-              onUpdate={handlePostSave}
-              showActions={true}
-            />
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                      {viewPost.author
+                        ?.split(" ")
+                        .map((n) => n[0])
+                        .join("") || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="font-semibold text-slate-800 dark:text-white">
+                      {viewPost.author || "Unknown Author"}
+                    </h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {getTimeAgo(viewPost.publishDate)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {viewPost.isPinned && (
+                    <Pin className="h-5 w-5 text-amber-500" />
+                  )}
+                  <Badge className={getStatusColor(viewPost.status)}>
+                    {getTranslatedStatus(viewPost.status)}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 mb-4">
+                <Badge className={getCategoryColor(viewPost.category)}>
+                  {getTranslatedCategory(viewPost.category)}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className={
+                    getAudienceColor(viewPost.targetAudience) +
+                    " text-white border-0"
+                  }
+                >
+                  {getTranslatedAudience(viewPost.targetAudience)}
+                </Badge>
+              </div>
+
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white mb-4">
+                {viewPost.title}
+              </h1>
+
+              {viewPost.image && (
+                <div className="mb-6 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+                  <img
+                    src={viewPost.image}
+                    alt={viewPost.title}
+                    className="w-full h-64 sm:h-96 object-cover"
+                  />
+                </div>
+              )}
+
+              <div className="prose dark:prose-invert max-w-none">
+                <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg leading-relaxed whitespace-pre-wrap">
+                  {viewPost.content}
+                </p>
+              </div>
+
+              {viewPost.tags && viewPost.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-6">
+                  {viewPost.tags.map((tag, index) => (
+                    <Badge key={index} variant="secondary">
+                      #{tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </DialogContent>
       </Dialog>

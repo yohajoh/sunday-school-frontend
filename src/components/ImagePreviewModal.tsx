@@ -12,8 +12,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { DialogDescription, DialogTitle } from "@radix-ui/react-dialog";
 
 interface Gallery {
   _id: string;
@@ -59,6 +60,14 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
+      <DialogHeader>
+        <DialogTitle>
+          <div>Gallery view</div>
+        </DialogTitle>
+        <DialogDescription>
+          <div>Gallery view</div>
+        </DialogDescription>
+      </DialogHeader>
       <DialogContent className="max-w-7xl max-h-[95vh] p-0 bg-white dark:bg-slate-900 border-0 shadow-3xl overflow-hidden rounded-3xl">
         <div className="flex flex-col lg:flex-row h-[95vh]">
           {/* Image Section */}

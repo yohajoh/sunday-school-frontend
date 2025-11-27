@@ -12,6 +12,7 @@ import {
   Sun,
   Moon,
   Church,
+  ImageIcon,
   X,
 } from "lucide-react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
@@ -28,6 +29,7 @@ export const UserLayout: React.FC = () => {
   const navigation = [
     { name: t("nav.dashboard"), href: "/", icon: Home },
     { name: t("nav.whatsNew"), href: "/whats-new", icon: Bell },
+    { name: "Gallery", href: "/gallery", icon: ImageIcon },
     { name: t("nav.profile"), href: "/profile", icon: User },
   ];
 

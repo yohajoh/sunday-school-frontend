@@ -15,6 +15,7 @@ import {
   Church,
   X,
   User,
+  ImageIcon,
   Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       to: "/admin/posts",
       icon: FileText,
       label: t("nav.posts"),
+      adminOnly: true,
+    },
+    {
+      to: "/admin/gallery",
+      icon: ImageIcon, // Make sure to import ImageIcon from lucide-react
+      label: "Gallery",
       adminOnly: true,
     },
     {

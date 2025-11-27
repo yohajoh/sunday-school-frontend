@@ -20,10 +20,12 @@ import { AdminDashboard } from "@/pages/admin/Dashboard";
 import { Users } from "@/pages/admin/Users";
 import { Assets } from "@/pages/admin/Assets";
 import { Posts } from "@/pages/admin/Posts";
+import { AdminGalleryPage } from "@/pages/admin/AdminGalleryPage"; // ADD THIS
 
 // User Pages
 import { UserDashboard } from "@/pages/user/Dashboard";
 import { WhatsNew } from "@/pages/user/WhatsNew";
+import { UserGalleryPage } from "@/pages/user/UserGalleryPage"; // ADD THIS
 
 // Shared Pages
 import { NotFound } from "@/pages/shared/NotFound";
@@ -70,6 +72,11 @@ function App() {
                       <Route path="users/new" element={<UserForm />} />
                       <Route path="assets" element={<Assets />} />
                       <Route path="posts" element={<Posts />} />
+                      <Route
+                        path="gallery"
+                        element={<AdminGalleryPage />}
+                      />{" "}
+                      {/* ADD THIS */}
                       <Route path="profile" element={<Profile />} />{" "}
                       {/* Shared profile */}
                     </Route>
@@ -87,6 +94,11 @@ function App() {
                       <Route path="profile" element={<Profile />} />{" "}
                       {/* Shared profile */}
                       <Route path="whats-new" element={<WhatsNew />} />
+                      <Route
+                        path="gallery"
+                        element={<UserGalleryPage />}
+                      />{" "}
+                      {/* ADD THIS */}
                     </Route>
 
                     {/* Fallback Routes */}

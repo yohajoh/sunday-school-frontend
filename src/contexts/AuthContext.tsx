@@ -112,25 +112,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [user, queryLoading, isError, isSuccess, isFetching]);
 
+  // contexts/AuthContext.tsx - Updated login function
   const login = async (email: string, password: string): Promise<void> => {
     console.log("🔑 [AuthContext] Login initiated");
     try {
+      // Clear any existing user data first
+      queryClient.setQueryData(["currentUser"], null);
+
       await authMutations.login.mutateAsync({ email, password });
       console.log("✅ [AuthContext] Login mutation completed");
 
-      // Add a small delay to ensure cookies are set
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Longer delay to ensure cookies are processed
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-      await queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      // Force refetch with error handling
+      try {
+        await queryClient.refetchQueries({
+          queryKey: ["currentUser"],
+          exact: true,
+        });
+        console.log("✅ [AuthContext] User refetched after login");
 
-      // Force refetch user data
-      await queryClient.refetchQueries({ queryKey: ["currentUser"] });
-      console.log("✅ [AuthContext] User refetched after login");
+        // Check if we have user data now
+        const userData = queryClient.getQueryData(["currentUser"]);
+        if (userData) {
+          console.log("🎉 [AuthContext] Login successful, redirecting...");
+          toast.success("Welcome back!", {
+            description: "You have successfully signed in.",
+          });
+          navigate(from, { replace: true });
+        } else {
+          throw new Error("No user data after login");
+        }
+      } catch (refetchError) {
+        console.error("❌ [AuthContext] Refetch failed:", refetchError);
+        throw new Error("Failed to verify login status");
+      }
     } catch (error) {
       console.error("❌ [AuthContext] Login failed:", error);
+      // Clear any partial state on failure
+      queryClient.setQueryData(["currentUser"], null);
       throw error;
     }
   };
+
+  // const login = async (email: string, password: string): Promise<void> => {
+  //   console.log("🔑 [AuthContext] Login initiated");
+  //   try {
+  //     await authMutations.login.mutateAsync({ email, password });
+  //     console.log("✅ [AuthContext] Login mutation completed");
+
+  //     // Add a small delay to ensure cookies are set
+  //     await new Promise((resolve) => setTimeout(resolve, 100));
+
+  //     await queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+
+  //     // Force refetch user data
+  //     await queryClient.refetchQueries({ queryKey: ["currentUser"] });
+  //     console.log("✅ [AuthContext] User refetched after login");
+  //   } catch (error) {
+  //     console.error("❌ [AuthContext] Login failed:", error);
+  //     throw error;
+  //   }
+  // };
 
   const register = async (userData: User): Promise<void> => {
     await authMutations.register.mutateAsync(userData);

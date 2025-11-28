@@ -3,7 +3,6 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { User } from "@/types";
 import { useAuthMutations } from "@/hooks/useAuthMutations";
-import { useNavigate } from "react-router-dom";
 
 interface AuthContextType {
   user: User | null;
@@ -41,7 +40,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const queryClient = useQueryClient();
   const authMutations = useAuthMutations();
 
-  // Fetch current user with better error handling
+  // Add state to track if we should fetch user data
+  const [shouldFetchUser, setShouldFetchUser] = useState(false);
+
+  // Fetch current user - ONLY when shouldFetchUser is true or on initial load
   const {
     data: user,
     isLoading: queryLoading,
@@ -53,6 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     queryKey: ["currentUser"],
     queryFn: async (): Promise<User | null> => {
       try {
+        console.log("🔍 [AuthContext] Fetching user data from /me endpoint");
         const response = await fetch(`${API_BASE}/api/sunday-school/auth/me`, {
           method: "GET",
           credentials: "include",
@@ -60,15 +63,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (!response.ok) {
           if (response.status === 401) {
+            console.log("🔐 [AuthContext] User not authenticated");
             return null;
           }
           throw new Error(`Failed to fetch user: ${response.status}`);
         }
 
         const data = await response.json();
+        console.log(
+          "✅ [AuthContext] User data fetched successfully:",
+          data.data.user.email
+        );
         return data.data.user;
       } catch (error) {
-        // Don't throw error, return null instead to prevent query from failing
+        console.error("❌ [AuthContext] Error fetching user:", error);
         return null;
       }
     },
@@ -76,7 +84,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     retryDelay: 1000,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (cache time)
+    enabled: shouldFetchUser || authState.isInitialized, // Only fetch when enabled
   });
+
+  // Initial load - enable fetching once
+  useEffect(() => {
+    if (!authState.isInitialized) {
+      setShouldFetchUser(true);
+    }
+  }, [authState.isInitialized]);
 
   // Update authentication state with better logic
   useEffect(() => {
@@ -113,88 +129,103 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [user, queryLoading, isError, isSuccess, isFetching]);
 
-  const navigate = useNavigate();
-
-  // contexts/AuthContext.tsx - Updated login function
   const login = async (email: string, password: string): Promise<void> => {
     console.log("🔑 [AuthContext] Login initiated");
     try {
       // Clear any existing user data first
       queryClient.setQueryData(["currentUser"], null);
+      setShouldFetchUser(false); // Disable fetching during login
 
+      // Perform login mutation
       await authMutations.login.mutateAsync({ email, password });
       console.log("✅ [AuthContext] Login mutation completed");
 
-      // Longer delay to ensure cookies are processed
+      // Wait longer to ensure cookies are properly set by the browser
+      console.log("⏳ [AuthContext] Waiting for cookies to be set...");
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Force refetch with error handling
-      try {
-        await queryClient.refetchQueries({
-          queryKey: ["currentUser"],
-          exact: true,
-        });
-        console.log("✅ [AuthContext] User refetched after login");
+      // Enable fetching and trigger refetch
+      setShouldFetchUser(true);
+      await queryClient.invalidateQueries({ queryKey: ["currentUser"] });
 
-        // Check if we have user data now
-        const userData = queryClient.getQueryData(["currentUser"]);
-        if (userData) {
-          console.log("🎉 [AuthContext] Login successful, redirecting...");
-          // toast.success("Welcome back!", {
-          //   description: "You have successfully signed in.",
-          // });
-          navigate("/", { replace: true });
-        } else {
-          throw new Error("No user data after login");
+      // Force refetch user data with retry logic
+      let retries = 0;
+      const maxRetries = 3;
+
+      while (retries < maxRetries) {
+        try {
+          console.log(
+            `🔄 [AuthContext] Refetching user data (attempt ${retries + 1})`
+          );
+          await queryClient.refetchQueries({
+            queryKey: ["currentUser"],
+            exact: true,
+          });
+
+          // Check if we have user data now
+          const userData = queryClient.getQueryData(["currentUser"]);
+          if (userData) {
+            console.log(
+              "🎉 [AuthContext] User data successfully retrieved after login"
+            );
+            break;
+          } else {
+            console.log("⚠️ [AuthContext] No user data yet, retrying...");
+            retries++;
+            await new Promise((resolve) => setTimeout(resolve, 300));
+          }
+        } catch (refetchError) {
+          console.error(
+            `❌ [AuthContext] Refetch attempt ${retries + 1} failed:`,
+            refetchError
+          );
+          retries++;
+          if (retries >= maxRetries) {
+            throw new Error(
+              "Failed to verify login status after multiple attempts"
+            );
+          }
+          await new Promise((resolve) => setTimeout(resolve, 300));
         }
-      } catch (refetchError) {
-        console.error("❌ [AuthContext] Refetch failed:", refetchError);
-        throw new Error("Failed to verify login status");
       }
     } catch (error) {
       console.error("❌ [AuthContext] Login failed:", error);
-      // Clear any partial state on failure
+      // Reset fetching state on failure
+      setShouldFetchUser(true);
       queryClient.setQueryData(["currentUser"], null);
       throw error;
     }
   };
 
-  // const login = async (email: string, password: string): Promise<void> => {
-  //   console.log("🔑 [AuthContext] Login initiated");
-  //   try {
-  //     await authMutations.login.mutateAsync({ email, password });
-  //     console.log("✅ [AuthContext] Login mutation completed");
-
-  //     // Add a small delay to ensure cookies are set
-  //     await new Promise((resolve) => setTimeout(resolve, 100));
-
-  //     await queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-
-  //     // Force refetch user data
-  //     await queryClient.refetchQueries({ queryKey: ["currentUser"] });
-  //     console.log("✅ [AuthContext] User refetched after login");
-  //   } catch (error) {
-  //     console.error("❌ [AuthContext] Login failed:", error);
-  //     throw error;
-  //   }
-  // };
-
   const register = async (userData: User): Promise<void> => {
-    await authMutations.register.mutateAsync(userData);
-    // Refetch user data immediately after registration
-    await queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    try {
+      setShouldFetchUser(false);
+      await authMutations.register.mutateAsync(userData);
+      // After registration, enable fetching to get user data
+      setShouldFetchUser(true);
+      await queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    } catch (error) {
+      setShouldFetchUser(true);
+      throw error;
+    }
   };
 
   const logout = async (): Promise<void> => {
     console.log("🚪 [AuthContext] Logout initiated");
-    await authMutations.logout.mutateAsync();
-    // Immediately update local state
-    setAuthState({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-      isInitialized: true,
-    });
+    try {
+      setShouldFetchUser(false);
+      await authMutations.logout.mutateAsync();
+    } finally {
+      // Immediately update local state and disable fetching
+      setAuthState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        isInitialized: true,
+      });
+      queryClient.setQueryData(["currentUser"], null);
+      setShouldFetchUser(true); // Re-enable for future logins
+    }
   };
 
   const updateProfile = async (userData: Partial<User>): Promise<void> => {

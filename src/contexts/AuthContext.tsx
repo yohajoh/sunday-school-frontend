@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { User } from "@/types";
 import { useAuthMutations } from "@/hooks/useAuthMutations";
+import { useNavigate } from "react-router-dom";
 
 interface AuthContextType {
   user: User | null;
@@ -112,6 +113,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [user, queryLoading, isError, isSuccess, isFetching]);
 
+  const navigate = useNavigate();
+
   // contexts/AuthContext.tsx - Updated login function
   const login = async (email: string, password: string): Promise<void> => {
     console.log("🔑 [AuthContext] Login initiated");
@@ -137,10 +140,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         const userData = queryClient.getQueryData(["currentUser"]);
         if (userData) {
           console.log("🎉 [AuthContext] Login successful, redirecting...");
-          toast.success("Welcome back!", {
-            description: "You have successfully signed in.",
-          });
-          navigate(from, { replace: true });
+          // toast.success("Welcome back!", {
+          //   description: "You have successfully signed in.",
+          // });
+          navigate("/", { replace: true });
         } else {
           throw new Error("No user data after login");
         }

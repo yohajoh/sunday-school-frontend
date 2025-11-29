@@ -363,9 +363,9 @@ export const UserGallery: React.FC = () => {
         )}
 
         {/* Gallery Content - Display ALL galleries */}
-        <div className="px-4 lg:px-0">
+        <div className="px-2 lg:px-0">
           {!isLoading && galleries.length === 0 ? (
-            <Card className="text-center py-12 lg:py-12 border-dashed border-2 border-slate-300 dark:border-slate-600 bg-white/50 dark:bg-slate-800/50 rounded-2xl lg:rounded-3xl">
+            <Card className="text-center py-12 lg:py-20 border-dashed border-2 border-slate-300 dark:border-slate-600 bg-white/50 dark:bg-slate-800/50 rounded-2xl lg:rounded-3xl">
               <CardContent className="p-6 lg:p-8">
                 <div className="w-16 h-16 lg:w-24 lg:h-24 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-2xl lg:rounded-3xl flex items-center justify-center mx-auto mb-4 lg:mb-6 shadow-2xl">
                   <ImageIcon className="h-8 w-8 lg:h-12 lg:w-12 text-white" />

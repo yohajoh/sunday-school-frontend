@@ -61,7 +61,12 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+
       keyframes: {
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
         "accordion-down": {
           from: { height: "0" },
           to: { height: "var(--radix-accordion-content-height)" },
@@ -104,6 +109,7 @@ export default {
         float: "float 3s ease-in-out infinite",
         "pulse-slow": "pulse-slow 4s ease-in-out infinite",
         "scale-smooth": "scaleSmooth 0.7s ease-out forwards",
+        shimmer: "shimmer 2s infinite",
       },
       backdropBlur: {
         xs: "2px",

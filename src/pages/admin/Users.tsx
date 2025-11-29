@@ -48,6 +48,7 @@ import { UserForm } from "@/components/forms/UserForm";
 import { useQuery } from "@tanstack/react-query";
 import Spinner from "@/components/shared/Spinner";
 import { useUserMutation } from "@/hooks/useUserMutations";
+import { ShimmerUsersTable } from "@/components/ui/loading-placeholders";
 
 export const Users: React.FC = () => {
   const { t } = useLanguage();
@@ -505,17 +506,12 @@ export const Users: React.FC = () => {
 
             {isLoading ? (
               <TableBody>
-                <TableRow className="hover:bg-transparent">
+                <TableRow className="hover:bg-transparent border-0">
                   <TableCell
                     colSpan={8}
-                    className="h-64 text-center bg-white dark:bg-slate-800"
+                    className="p-0 bg-white dark:bg-slate-800 border-0"
                   >
-                    <div className="flex flex-col items-center justify-center h-full w-full space-y-3">
-                      <Spinner className="h-8 w-8 text-indigo-600" />
-                      <p className="text-base font-medium text-muted-foreground">
-                        Loading data...
-                      </p>
-                    </div>
+                    <ShimmerUsersTable />
                   </TableCell>
                 </TableRow>
               </TableBody>

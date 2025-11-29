@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,12 +22,28 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { PageLoading } from "@/components/ui/loading-placeholders";
 
 export const AdminDashboard: React.FC = () => {
   const { t } = useLanguage();
-  const { userrs, assets, posts, currentUser } = useApp();
+  const { userrs, assets, posts } = useApp();
   const navigate = useNavigate();
+  // Demo loading state - shows loading for 5 seconds
+  const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    // Simulate loading for 5 seconds
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show loading state
+  if (isLoading) {
+    return <PageLoading type="dashboard" />;
+  }
   const stats = [
     {
       title: t("dashboard.totalUsers"),

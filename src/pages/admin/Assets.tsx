@@ -49,6 +49,11 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useAssetMutations } from "@/hooks/useAssetMutation";
 import exportAssets from "@/lib/exportAssets";
+import {
+  ShimmerAssetsTable,
+  ShimmerAssetsHeader,
+  LoadingPulse,
+} from "@/components/ui/loading-placeholders";
 
 export const Assets: React.FC = () => {
   const { t } = useLanguage();
@@ -91,6 +96,62 @@ export const Assets: React.FC = () => {
       }
     },
   });
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <ShimmerAssetsHeader />
+
+        {/* Header Controls Loading */}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="relative flex-1">
+              <LoadingPulse className="h-10 w-full rounded-xl" />
+            </div>
+            <div className="flex gap-2">
+              <LoadingPulse className="h-9 w-24 rounded-xl" />
+              <LoadingPulse className="h-9 w-28 rounded-xl" />
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <LoadingPulse className="h-9 w-32 rounded-xl" />
+            <LoadingPulse className="h-9 w-40 rounded-xl" />
+            <LoadingPulse className="h-9 w-40 rounded-xl" />
+          </div>
+        </div>
+
+        {/* Assets Table Loading */}
+        <ShimmerAssetsTable />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="p-4 bg-red-100 dark:bg-red-900/20 rounded-2xl w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+            <Package className="h-8 w-8 text-red-600 dark:text-red-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
+            Failed to load assets
+          </h3>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
+            {error.message}
+          </p>
+          <Button
+            onClick={() => window.location.reload()}
+            className="bg-amber-500 hover:bg-amber-600"
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const handleSort = (key: keyof Asset) => {
     let direction: "asc" | "desc" = "asc";
@@ -216,14 +277,6 @@ export const Assets: React.FC = () => {
         return "text-gray-600 dark:text-gray-400";
     }
   };
-
-  // const getAssignedUserName = (userId?: string) => {
-  //   if (!userId) return t("assets.notAssigned");
-  //   const user = users.find((u: Asset) => u.id === userId);
-  //   return user
-  //     ? `${user.firstName} ${user.lastName}`
-  //     : t("assets.unknownUser");
-  // };
 
   const handleExportAssets = () => {
     exportAssets(filteredAssets);

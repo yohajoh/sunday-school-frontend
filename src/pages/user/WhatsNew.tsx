@@ -16,6 +16,10 @@ import {
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  PageLoading,
+  LoadingPulse,
+} from "@/components/ui/loading-placeholders";
 
 export const WhatsNew: React.FC = () => {
   const { t } = useLanguage();
@@ -236,12 +240,110 @@ export const WhatsNew: React.FC = () => {
     return (
       <div className="space-y-6 sm:p-6">
         <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-800 via-purple-900 to-pink-900 p-6 sm:p-8 text-white border border-purple-500/20">
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-purple-200">Loading posts...</p>
+          <div className="relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start gap-3 sm:gap-4 mb-4">
+                  <div className="p-2 sm:p-3 bg-purple-500/20 rounded-xl sm:rounded-2xl border border-purple-400/30 flex-shrink-0">
+                    <LoadingPulse className="h-6 w-6 sm:h-8 sm:w-8 rounded bg-purple-400/30" />
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <LoadingPulse className="h-8 w-48 bg-purple-400/30" />
+                    <LoadingPulse className="h-4 w-64 bg-purple-300/30" />
+                  </div>
+                </div>
+
+                {/* Stats Row Loading */}
+                <div className="flex flex-wrap gap-3 sm:gap-6 mt-4 sm:mt-6">
+                  {[1, 2, 3].map((item) => (
+                    <div
+                      key={item}
+                      className="flex items-center gap-2 sm:gap-3 bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/20 min-w-0 flex-1 sm:flex-none"
+                    >
+                      <LoadingPulse className="h-4 w-4 sm:h-6 sm:w-6 rounded-full bg-white/30" />
+                      <div className="min-w-0 space-y-1">
+                        <LoadingPulse className="h-6 w-8 bg-white/40" />
+                        <LoadingPulse className="h-3 w-12 bg-white/30" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* Header Controls Loading */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full sm:w-auto">
+            <LoadingPulse className="h-10 w-full sm:w-80 rounded-xl" />
+            <LoadingPulse className="h-10 w-32 rounded-xl" />
+          </div>
+          <LoadingPulse className="h-10 w-48 rounded-xl" />
+        </div>
+
+        {/* Posts Loading */}
+        <div className="space-y-6">
+          {[1, 2, 3].map((item) => (
+            <div
+              key={item}
+              className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-700 shadow-lg overflow-hidden"
+            >
+              {/* Card Header Loading */}
+              <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <LoadingPulse className="h-10 w-10 rounded-full" />
+                    <div className="space-y-2">
+                      <LoadingPulse className="h-4 w-24" />
+                      <LoadingPulse className="h-3 w-16" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <LoadingPulse className="h-4 w-4 rounded-full" />
+                    <LoadingPulse className="h-6 w-16 rounded-lg" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Card Content Loading */}
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <LoadingPulse className="h-6 w-16 rounded-lg" />
+                  <LoadingPulse className="h-6 w-20 rounded-lg" />
+                </div>
+
+                <LoadingPulse className="h-6 w-3/4 mb-3" />
+                <LoadingPulse className="h-48 w-full rounded-xl mb-4" />
+
+                <div className="space-y-2 mb-4">
+                  <LoadingPulse className="h-4 w-full" />
+                  <LoadingPulse className="h-4 w-2/3" />
+                  <LoadingPulse className="h-4 w-1/2" />
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <LoadingPulse className="h-6 w-12 rounded-lg" />
+                  <LoadingPulse className="h-6 w-16 rounded-lg" />
+                  <LoadingPulse className="h-6 w-14 rounded-lg" />
+                </div>
+
+                {/* Engagement Stats Loading */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <LoadingPulse className="h-8 w-16 rounded-lg" />
+                    <LoadingPulse className="h-8 w-16 rounded-lg" />
+                    <LoadingPulse className="h-8 w-16 rounded-lg" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <LoadingPulse className="h-8 w-12 rounded-lg" />
+                    <LoadingPulse className="h-8 w-12 rounded-lg" />
+                    <LoadingPulse className="h-8 w-12 rounded-lg" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );

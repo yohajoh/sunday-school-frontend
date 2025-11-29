@@ -49,6 +49,12 @@ import { toast } from "sonner";
 import { PostForm } from "@/components/forms/PostForm";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  ShimmerPostsTable,
+  ShimmerPostsCards,
+  ShimmerPostsHeader,
+  LoadingPulse,
+} from "@/components/ui/loading-placeholders";
 
 export const Posts: React.FC = () => {
   const { t } = useLanguage();
@@ -539,11 +545,47 @@ export const Posts: React.FC = () => {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-400">Loading posts...</p>
+      <div className="space-y-6 max-w-full overflow-x-hidden">
+        <ShimmerPostsHeader />
+
+        {/* Statistics Section Loading */}
+        <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-700 shadow-lg overflow-hidden">
+          <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <LoadingPulse className="h-5 w-5 rounded" />
+                <LoadingPulse className="h-6 w-32" />
+              </div>
+              <LoadingPulse className="h-9 w-24 rounded-lg" />
+            </div>
+          </div>
         </div>
+
+        {/* Header Controls Loading */}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex-1 flex flex-col sm:flex-row gap-3">
+              <LoadingPulse className="h-10 w-full sm:max-w-sm rounded-xl" />
+              <LoadingPulse className="h-10 w-24 rounded-xl sm:hidden" />
+            </div>
+            <div className="hidden sm:flex gap-2">
+              <LoadingPulse className="h-9 w-24 rounded-xl" />
+              <LoadingPulse className="h-9 w-28 rounded-xl" />
+              <LoadingPulse className="h-9 w-32 rounded-xl" />
+              <LoadingPulse className="h-9 w-32 rounded-xl" />
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex gap-3">
+              <LoadingPulse className="h-9 w-32 rounded-xl" />
+              <LoadingPulse className="h-9 w-40 rounded-xl" />
+            </div>
+            <LoadingPulse className="h-9 w-40 rounded-xl" />
+          </div>
+        </div>
+
+        {/* Posts Content Loading */}
+        <ShimmerPostsTable />
       </div>
     );
   }
@@ -1426,7 +1468,6 @@ export const Posts: React.FC = () => {
                     </div>
 
                     {/* Comment Section - Only shown when toggled */}
-                    {/* Comment Section - Only shown when toggled */}
                     {showCommentSection[post._id || post.id] && (
                       <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
                         <h4 className="font-semibold text-slate-800 dark:text-white mb-3">
@@ -1456,8 +1497,8 @@ export const Posts: React.FC = () => {
                                   <div className="flex items-center gap-2 mb-1">
                                     <span className="font-medium text-slate-800 dark:text-white text-sm truncate">
                                       {comment.authorId?.firstName &&
-                                      comment.authorId?.lastName
-                                        ? `${comment.authorId.firstName} ${comment.authorId.lastName}`
+                                      comment.authorId?.middleName
+                                        ? `${comment.authorId?.firstName} ${comment.authorId?.middleName}`
                                         : comment.author || "Unknown User"}
                                     </span>
                                     <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -1649,7 +1690,6 @@ export const Posts: React.FC = () => {
               </div>
 
               {/* Comments Section in Detail View */}
-              {/* Comments Section in Detail View */}
               <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
                 <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">
                   Comments (
@@ -1684,8 +1724,8 @@ export const Posts: React.FC = () => {
                             <div className="flex items-center gap-2 mb-2">
                               <span className="font-semibold text-slate-800 dark:text-white">
                                 {comment.authorId?.firstName &&
-                                comment.authorId?.lastName
-                                  ? `${comment.authorId.firstName} ${comment.authorId.lastName}`
+                                comment.authorId?.middleName
+                                  ? `${comment.authorId?.firstName} ${comment.authorId?.middleName}`
                                   : comment.author || "Unknown User"}
                               </span>
                               <span className="text-sm text-slate-500 dark:text-slate-400">

@@ -363,7 +363,7 @@ export const UserGallery: React.FC = () => {
         )}
 
         {/* Gallery Content - Display ALL galleries */}
-        <div className="px-2 lg:px-0">
+        <div className="lg:px-0">
           {!isLoading && galleries.length === 0 ? (
             <Card className="text-center py-12 lg:py-20 border-dashed border-2 border-slate-300 dark:border-slate-600 bg-white/50 dark:bg-slate-800/50 rounded-2xl lg:rounded-3xl">
               <CardContent className="p-6 lg:p-8">

@@ -204,7 +204,7 @@ export const WhatsNew: React.FC = () => {
 
     const commentData = {
       postId: postId,
-      author: `${user?.firstName} ${user?.lastName}`,
+      author: `${user?.firstName} ${user?.middleName}`,
       authorId: user?._id,
       text: commentText,
     };

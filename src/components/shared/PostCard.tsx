@@ -1,7 +1,7 @@
 // components/PostCard.tsx
 import React, { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Post, Comment } from "@/types";
+import { Post } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -410,7 +410,7 @@ export const PostCard: React.FC<PostCardProps> = ({
                   <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 shadow-md">
                     <AvatarFallback className="bg-gradient-to-br from-blue-500 to-violet-500 text-white font-semibold text-xs sm:text-sm">
                       {user
-                        ? `${user.firstName?.[0]}${user.lastName?.[0]}`
+                        ? `${user.firstName?.[0]}${user.middleName?.[0]}`
                         : "U"}
                     </AvatarFallback>
                   </Avatar>

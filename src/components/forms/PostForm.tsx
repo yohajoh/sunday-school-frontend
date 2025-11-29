@@ -344,6 +344,7 @@ export const PostForm: React.FC<PostFormProps> = ({
       const postData = {
         title: data.title,
         content: data.content,
+        author: `${user?.firstName} ${user?.middleName}`,
         authorId: user?._id, // You might want to use currentUser.id here
         category: data.category,
         status: data.status,

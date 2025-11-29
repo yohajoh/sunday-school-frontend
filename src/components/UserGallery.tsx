@@ -210,7 +210,7 @@ export const UserGallery: React.FC = () => {
         {/* Advanced Controls - Mobile Optimized */}
         <Card className="border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl shadow-2xl rounded-2xl lg:rounded-3xl border border-slate-200/50 dark:border-slate-700/50 mx-2 lg:mx-0">
           <CardContent className="p-4 lg:p-6">
-            <div className="space-y-4 lg:space-y-0 lg:flex lg:items-center lg:gap-4">
+            <div className="p-6 sm:p-8 space-y-4 lg:space-y-0 lg:flex lg:items-center lg:gap-4">
               {/* Search - Full width on mobile */}
               <div className="flex-1 relative">
                 <Search className="absolute left-3 lg:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 lg:h-5 lg:w-5 text-slate-400" />
@@ -382,7 +382,7 @@ export const UserGallery: React.FC = () => {
             </Card>
           ) : (
             <div
-              className={`grid grid-cols-1 ${
+              className={`grid grid-cols-1 p-6 sm:p-8${
                 viewMode === "grid"
                   ? "sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 lg:gap-6"
                   : "gap-3 lg:gap-6"

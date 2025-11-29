@@ -122,7 +122,7 @@ export const UserLayout: React.FC = () => {
           )}
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);
@@ -143,7 +143,7 @@ export const UserLayout: React.FC = () => {
                     ${
                       sidebarCollapsed
                         ? "justify-center p-3"
-                        : "justify-start px-3 py-2.5 gap-3"
+                        : "justify-start px-3 py-3 gap-3"
                     }
                   `}
                 >
@@ -160,7 +160,7 @@ export const UserLayout: React.FC = () => {
                     <Icon className="h-5 w-5" />
                   </div>
                   {!sidebarCollapsed && (
-                    <span className="font-medium text-sm font-sans">
+                    <span className="font-medium text-base font-sans">
                       {item.name}
                     </span>
                   )}
@@ -169,9 +169,15 @@ export const UserLayout: React.FC = () => {
             })}
           </nav>
 
-          {/* Logout Button */}
-          {!sidebarCollapsed && (
-            <div className="p-4 border-t border-gray-100 dark:border-gray-800">
+          {/* Footer Actions */}
+          <div className="p-3 border-t border-gray-100 dark:border-gray-800 space-y-2">
+            {/* Language Switcher - Mobile visible in sidebar */}
+            <div className="sm:hidden">
+              <LanguageSwitcher variant="full" />
+            </div>
+
+            {/* Logout Button */}
+            {!sidebarCollapsed && (
               <Button
                 variant="outline"
                 onClick={logout}
@@ -180,8 +186,8 @@ export const UserLayout: React.FC = () => {
                 <LogOut className="h-4 w-4 mr-2" />
                 {t("auth.logout")}
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
@@ -193,8 +199,8 @@ export const UserLayout: React.FC = () => {
       >
         {/* Top header */}
         <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-2xl border-b border-gray-200/60 dark:border-gray-800/60 sticky top-0 z-30 flex-shrink-0 shadow-sm">
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between p-3">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="lg:hidden p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
@@ -215,7 +221,7 @@ export const UserLayout: React.FC = () => {
               </button>
 
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white font-sans">
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white font-sans">
                   {navigation.find((item) => isActive(item.href))?.name ||
                     "Dashboard"}
                 </h1>
@@ -231,12 +237,12 @@ export const UserLayout: React.FC = () => {
                 </span>
               </div>
 
-              {/* Language Switcher - Icon only */}
+              {/* Language Switcher - Desktop only */}
               <div className="hidden sm:block">
                 <LanguageSwitcher variant="icon" />
               </div>
 
-              {/* Theme Toggle - Icon only */}
+              {/* Theme Toggle */}
               <Button
                 variant="outline"
                 size="sm"
@@ -263,7 +269,7 @@ export const UserLayout: React.FC = () => {
 
         {/* Page content - Use Outlet for nested routes */}
         <main className="flex-1 overflow-auto">
-          <div className="p-4">
+          <div className="p-3">
             <Outlet />
           </div>
         </main>

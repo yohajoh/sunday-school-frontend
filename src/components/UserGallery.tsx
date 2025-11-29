@@ -209,7 +209,7 @@ export const UserGallery: React.FC = () => {
 
         {/* Advanced Controls - Mobile Optimized */}
         <Card className="border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl shadow-2xl rounded-2xl lg:rounded-3xl border border-slate-200/50 dark:border-slate-700/50 mx-2 lg:mx-0">
-          <CardContent className="p-4 lg:p-6">
+          <CardContent className="p-6 lg:p-4">
             <div className="space-y-4 lg:space-y-0 lg:flex lg:items-center lg:gap-4">
               {/* Search - Full width on mobile */}
               <div className="flex-1 relative">

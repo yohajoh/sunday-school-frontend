@@ -238,9 +238,9 @@ export const UserLayout: React.FC = () => {
               </div>
 
               {/* Language Switcher - Desktop only */}
-              {/* <div className="hidden sm:block">
-                <LanguageSwitcher variant="icon" />
-              </div> */}
+              <div className="hidden sm:block">
+                <LanguageSwitcher variant="full" />
+              </div>
 
               <div className="sm:hidden">
                 <LanguageSwitcher variant="full" />

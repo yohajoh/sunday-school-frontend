@@ -486,7 +486,7 @@ export const UserLayout: React.FC = () => {
 
         {/* Page content - Use Outlet for nested routes */}
         <main className="flex-1 overflow-auto">
-          <div>
+          <div className="p-3">
             <Outlet />
           </div>
         </main>

@@ -251,11 +251,11 @@ export const PostCard: React.FC<PostCardProps> = ({
         </div>
 
         {post.image && (
-          <div className="mt-4 rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
+          <div className="mt-4 sm:mt-6 rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
             <img
               src={post.image}
               alt={post.title}
-              className="w-full h-48 sm:h-80 object-cover hover:scale-105 transition-transform duration-500"
+              className="w-full h-auto max-h-96 object-contain bg-slate-100 dark:bg-slate-900"
             />
           </div>
         )}

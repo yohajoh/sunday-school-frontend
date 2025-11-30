@@ -171,13 +171,13 @@ export const PostCard: React.FC<PostCardProps> = ({
   const audienceInfo = getAudienceBadge(post.targetAudience);
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden h-fit">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl hover:shadow-2xl transition-all duration-500 group overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3 min-w-0 flex-1">
-            <Avatar className="h-10 w-10 border-2 border-white dark:border-slate-800 shadow-md flex-shrink-0">
-              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-violet-500 text-white font-semibold text-sm">
+      <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
+        <div className="flex items-start justify-between mb-4 gap-3">
+          <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+            <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-white dark:border-slate-800 shadow-lg flex-shrink-0">
+              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-violet-500 text-white font-semibold text-xs sm:text-sm">
                 {post.author
                   ?.split(" ")
                   .map((n) => n[0])
@@ -186,31 +186,31 @@ export const PostCard: React.FC<PostCardProps> = ({
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                <h3 className="font-semibold text-slate-800 dark:text-white text-base group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                <h3 className="font-semibold text-slate-800 dark:text-white text-base sm:text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
                   {post.title}
                 </h3>
                 {post.isPinned && (
-                  <Badge className="bg-amber-500 text-white border-0 shadow-sm text-xs w-fit flex-shrink-0">
+                  <Badge className="bg-amber-500 text-white border-0 shadow-sm text-xs w-fit">
                     <Pin className="h-3 w-3 mr-1" />
                     Pinned
                   </Badge>
                 )}
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                 <div className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
+                  <User className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span>By {post.author || "Admin"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
+                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span>{getTimeAgo(post.publishDate)}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
             <Badge
               className={`${getCategoryColor(
                 post.category
@@ -243,25 +243,25 @@ export const PostCard: React.FC<PostCardProps> = ({
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-4 sm:p-6">
         <div className="prose prose-slate dark:prose-invert max-w-none">
-          <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-base whitespace-pre-wrap break-words line-clamp-4">
+          <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-base sm:text-lg whitespace-pre-wrap break-words">
             {post.content}
           </p>
         </div>
 
         {post.image && (
-          <div className="mt-4 rounded-lg overflow-hidden">
+          <div className="mt-4 rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
             <img
               src={post.image}
               alt={post.title}
-              className="w-full h-48 object-cover hover:scale-105 transition-transform duration-300 rounded-lg"
+              className="w-full h-48 sm:h-80 object-cover hover:scale-105 transition-transform duration-500"
             />
           </div>
         )}
 
-        {/* Stats */}
-        <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex-wrap">
+        {/* Stats - Now showing actual counts */}
+        <div className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex-wrap">
           <span className="font-semibold">
             {(post.likes || []).length} Likes
           </span>
@@ -275,24 +275,26 @@ export const PostCard: React.FC<PostCardProps> = ({
       {/* Actions */}
       {showActions && (
         <>
-          <div className="px-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+          <div className="px-4 sm:px-6 pb-4 border-b border-slate-200 dark:border-slate-700">
             <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleLike}
-                className={`gap-2 flex-1 rounded-lg transition-all duration-300 text-sm ${
+                className={`gap-2 sm:gap-3 flex-1 rounded-xl transition-all duration-300 text-xs sm:text-sm ${
                   isLiked
                     ? "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20"
                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50"
                 }`}
               >
                 <Heart
-                  className={`h-4 w-4 ${
+                  className={`h-4 w-4 sm:h-5 sm:w-5 ${
                     isLiked ? "fill-red-600 dark:fill-red-400" : ""
                   }`}
                 />
-                <span>Like</span>
+                <span className="hidden sm:inline">
+                  {isLiked ? "Liked" : "Like"}
+                </span>
                 <span>({(post.likes || []).length})</span>
               </Button>
 
@@ -300,24 +302,24 @@ export const PostCard: React.FC<PostCardProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={handleToggleComments}
-                className={`gap-2 flex-1 rounded-lg transition-all duration-300 text-sm ${
+                className={`gap-2 sm:gap-3 flex-1 rounded-xl transition-all duration-300 text-xs sm:text-sm ${
                   showComments
                     ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50"
                 }`}
               >
-                <MessageCircle className="h-4 w-4" />
-                <span>Comment</span>
+                <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Comment</span>
                 <span>({comments.length})</span>
               </Button>
 
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-2 flex-1 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-lg transition-all duration-300 text-sm"
+                className="gap-2 sm:gap-3 flex-1 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-all duration-300 text-xs sm:text-sm"
               >
-                <Share2 className="h-4 w-4" />
-                <span>Share</span>
+                <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Share</span>
                 <span>({post.shares || 0})</span>
               </Button>
             </div>
@@ -325,24 +327,30 @@ export const PostCard: React.FC<PostCardProps> = ({
 
           {/* Comments Section */}
           {showComments && (
-            <div className="p-4 space-y-4 bg-slate-50 dark:bg-slate-700/30">
-              {/* Comments List */}
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 bg-slate-50 dark:bg-slate-700/30 rounded-b-2xl sm:rounded-b-3xl">
+              {/* Comments List - Displayed ABOVE the comment input */}
               {comments.length > 0 ? (
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-slate-800 dark:text-white text-base">
+                <div className="space-y-3 sm:space-y-4">
+                  <h4 className="font-semibold text-slate-800 dark:text-white text-base sm:text-lg">
                     Comments ({comments.length})
                   </h4>
 
                   {/* Scrollable comments container */}
                   <div
-                    className={`space-y-3 ${
-                      comments.length > 3 ? "max-h-64 overflow-y-auto pr-2" : ""
+                    className={`space-y-3 sm:space-y-4 ${
+                      comments.length > 3
+                        ? "max-h-64 sm:max-h-80 overflow-y-auto pr-2"
+                        : ""
                     }`}
                   >
                     {comments.map((comment: any) => (
-                      <div key={comment._id} className="flex gap-3 group">
-                        <Avatar className="h-8 w-8 flex-shrink-0 shadow-md">
-                          <AvatarFallback className="bg-gradient-to-br from-blue-500/20 to-violet-500/20 text-slate-700 dark:text-slate-300 font-semibold text-sm">
+                      <div
+                        key={comment._id}
+                        className="flex gap-3 sm:gap-4 group"
+                      >
+                        <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 shadow-md">
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500/20 to-violet-500/20 text-slate-700 dark:text-slate-300 font-semibold text-xs sm:text-sm">
+                            {/* Use actual comment author's initials */}
                             {comment.author
                               ?.split(" ")
                               .map((n: string) => n[0])
@@ -350,10 +358,11 @@ export const PostCard: React.FC<PostCardProps> = ({
                               .toUpperCase() || "U"}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex-1 bg-white dark:bg-slate-700/50 rounded-lg p-3 border border-slate-200 dark:border-slate-600 group-hover:border-slate-300 dark:group-hover:border-slate-500 transition-all duration-300 min-w-0">
+                        <div className="flex-1 bg-white dark:bg-slate-700/50 rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-slate-200 dark:border-slate-600 group-hover:border-slate-300 dark:group-hover:border-slate-500 transition-all duration-300 min-w-0">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <p className="font-semibold text-slate-800 dark:text-white text-sm truncate">
+                            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                              <p className="font-semibold text-slate-800 dark:text-white text-sm sm:text-base truncate">
+                                {/* Display the ACTUAL comment author name from fetched data */}
                                 {comment.author || "User"}
                               </p>
                               <span className="text-xs text-slate-500 dark:text-slate-400 flex-shrink-0">
@@ -361,7 +370,7 @@ export const PostCard: React.FC<PostCardProps> = ({
                               </span>
                             </div>
                           </div>
-                          <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-sm break-words">
+                          <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-sm sm:text-base break-words">
                             {comment.text}
                           </p>
 
@@ -390,27 +399,27 @@ export const PostCard: React.FC<PostCardProps> = ({
                   )}
                 </div>
               ) : (
-                <div className="text-center py-4 text-slate-500 dark:text-slate-400 text-sm">
+                <div className="text-center py-4 text-slate-500 dark:text-slate-400">
                   No comments yet. Be the first to comment!
                 </div>
               )}
 
-              {/* Add Comment */}
+              {/* Add Comment - Displayed BELOW the comments list */}
               {user && (
-                <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-600">
-                  <Avatar className="h-8 w-8 flex-shrink-0 shadow-md">
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-violet-500 text-white font-semibold text-sm">
+                <div className="flex gap-3 sm:gap-4 pt-4 border-t border-slate-200 dark:border-slate-600">
+                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 shadow-md">
+                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-violet-500 text-white font-semibold text-xs sm:text-sm">
                       {user
                         ? `${user.firstName?.[0]}${user.middleName?.[0]}`
                         : "U"}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 flex gap-2 min-w-0">
+                  <div className="flex-1 flex gap-2 sm:gap-3 min-w-0">
                     <Textarea
                       placeholder="Write a comment..."
                       value={commentText}
                       onChange={(e) => handleCommentChange(e.target.value)}
-                      className="min-h-[60px] bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none rounded-lg transition-all duration-300 flex-1 text-sm"
+                      className="min-h-[60px] sm:min-h-[80px] bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none rounded-xl transition-all duration-300 flex-1 text-sm sm:text-base"
                       onKeyPress={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();
@@ -421,10 +430,12 @@ export const PostCard: React.FC<PostCardProps> = ({
                     <Button
                       onClick={handleCommentSubmit}
                       disabled={isSubmitting || !commentText.trim()}
-                      className="bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 text-white self-end rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed h-10 w-10 sm:w-auto sm:px-4"
+                      className="bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 text-white self-end rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed h-10 w-10 sm:h-auto sm:w-auto sm:px-4"
                     >
                       <Send className="h-4 w-4" />
-                      <span className="hidden sm:inline ml-2">Post</span>
+                      <span className="hidden sm:inline ml-2">
+                        {isSubmitting ? "Posting..." : "Post"}
+                      </span>
                     </Button>
                   </div>
                 </div>
